@@ -1,0 +1,276 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Soshie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;700&family=Hanken+Grotesk:wght@400;500&family=DM+Mono:wght@400&display=swap">
+<style>
+  :root{
+    --ground:#FBF7FD; --ground-2:#EFE7F6;
+    --ink:#2B2136; --muted:#7B6E8C;
+    --line:rgba(43,33,54,.13); --panel:rgba(255,255,255,.66);
+    --accent:#8B63D6; --swatch-ring:rgba(43,33,54,.16);
+    --display:"Gabarito",ui-sans-serif,system-ui,sans-serif;
+    --body:"Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;
+    --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --ground:#171223; --ground-2:#0D0A15;
+    --ink:#F0E9F7; --muted:#A093B4;
+    --line:rgba(255,255,255,.15); --panel:rgba(255,255,255,.07);
+    --accent:#C4A9F2; --swatch-ring:rgba(255,255,255,.22);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#171223; --ground-2:#0D0A15;
+    --ink:#F0E9F7; --muted:#A093B4;
+    --line:rgba(255,255,255,.15); --panel:rgba(255,255,255,.07);
+    --accent:#C4A9F2; --swatch-ring:rgba(255,255,255,.22);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;height:100dvh;overflow:hidden;color:var(--ink);font-family:var(--body);
+    background:radial-gradient(125% 95% at 50% -10%,var(--ground) 0%,var(--ground-2) 100%);
+  }
+  #stage{position:fixed;inset:0}
+  canvas{display:block;touch-action:none}
+
+  header{position:fixed;top:0;left:0;padding:24px 26px;z-index:2;pointer-events:none;
+    display:flex;flex-direction:column;gap:7px}
+  h1{margin:0;font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.015em}
+  .spec{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted);
+    font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .hint{margin:0;font-size:12.5px;color:var(--muted)}
+
+  #palette{position:fixed;left:26px;bottom:22px;z-index:2;display:flex;flex-direction:column;gap:8px}
+  #palette .cap{font-family:var(--mono);font-size:10px;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--muted)}
+  #palette ul{margin:0;padding:0;list-style:none;display:flex;gap:6px}
+  #palette li{width:19px;height:19px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--swatch-ring)}
+
+  #bar{position:fixed;left:0;right:0;bottom:0;padding:20px;z-index:2;
+    display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+  button{
+    font-family:var(--body);font-size:12.5px;font-weight:500;color:var(--ink);
+    background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:8px 16px;cursor:pointer;transition:border-color .15s,color .15s;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  }
+  button:hover{border-color:var(--accent)}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+
+  #load{position:fixed;inset:0;z-index:3;display:grid;place-content:center;justify-items:center;
+    gap:14px;background:radial-gradient(125% 95% at 50% -10%,var(--ground) 0%,var(--ground-2) 100%);
+    transition:opacity .55s}
+  #load.gone{opacity:0;pointer-events:none}
+  #track{width:150px;height:2px;border-radius:2px;background:var(--line);overflow:hidden}
+  #fill{height:100%;width:6%;background:var(--accent);transition:width .25s}
+  #pct{font-family:var(--mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  @media (max-width:640px){
+    #palette{display:none}
+    header{padding:18px 20px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="stage"></div>
+
+<header>
+  <h1>Soshie</h1>
+  <p class="spec">140 mm tall · 8 printed parts · 210k triangles</p>
+  <p class="hint">Drag to rotate · scroll to zoom</p>
+</header>
+
+<div id="palette">
+  <div class="cap">Palette</div>
+  <ul>
+    <li style="background:#F2A8CE" title="#F2A8CE suit &amp; helmet"></li>
+    <li style="background:#A98BE0" title="#A98BE0 gloves, trim, ears"></li>
+    <li style="background:#B3C4EE" title="#B3C4EE studs"></li>
+    <li style="background:#A9C6DF" title="#A9C6DF hair &amp; brows"></li>
+    <li style="background:#F5CE72" title="#F5CE72 boots"></li>
+    <li style="background:#5E4499" title="#5E4499 soles"></li>
+  </ul>
+</div>
+
+<div id="bar">
+  <button id="spin" aria-pressed="true">Auto-rotate</button>
+  <button id="v-front">Front</button>
+  <button id="v-three">3/4</button>
+  <button id="v-side">Side</button>
+  <button id="v-back">Back</button>
+</div>
+
+<div id="load">
+  <div id="track"><div id="fill"></div></div>
+  <span id="pct">Loading</span>
+</div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls}   from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader}      from 'three/addons/loaders/GLTFLoader.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+
+const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.NeutralToneMapping ?? THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.14;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.getElementById('stage').appendChild(renderer.domElement);
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, innerWidth/innerHeight, 0.01, 20);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.05).texture;
+scene.environmentIntensity = 0.85;
+
+const key = new THREE.DirectionalLight(0xffffff, 2.5);
+key.position.set(0.35, 0.42, 0.30);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+const cam = key.shadow.camera, d = 0.13;
+cam.left = -d; cam.right = d; cam.top = d; cam.bottom = -d; cam.near = 0.05; cam.far = 1.2;
+key.shadow.bias = -0.0009; key.shadow.radius = 4;
+scene.add(key);
+
+const fillLight = new THREE.DirectionalLight(0xdfe6ff, 0.6);
+fillLight.position.set(-0.40, 0.20, -0.35);
+scene.add(fillLight);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xEDE6F7, 1.05));
+
+/* soft contact shadow so the figure sits on the ground instead of floating */
+const sc = document.createElement('canvas'); sc.width = sc.height = 256;
+const g2 = sc.getContext('2d');
+const rg = g2.createRadialGradient(128,128,0,128,128,128);
+rg.addColorStop(0,'rgba(58,38,88,.32)');
+rg.addColorStop(.45,'rgba(58,38,88,.15)');
+rg.addColorStop(1,'rgba(58,38,88,0)');
+g2.fillStyle = rg; g2.fillRect(0,0,256,256);
+const blobTex = new THREE.CanvasTexture(sc);
+const blob = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.132, 0.132).rotateX(-Math.PI/2),
+  new THREE.MeshBasicMaterial({map:blobTex, transparent:true, depthWrite:false}));
+blob.position.y = 0.0005;
+scene.add(blob);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.075;
+controls.minDistance = 0.11; controls.maxDistance = 0.9;
+controls.autoRotate = !reduced; controls.autoRotateSpeed = 0.9;
+
+const PIVOT = new THREE.Vector3(0, 0.070, 0);
+const VIEWS = {
+  front: new THREE.Vector3( 1.00, 0.13,  0.00).normalize(),
+  three: new THREE.Vector3( 0.80, 0.22, -0.56).normalize(),
+  side:  new THREE.Vector3( 0.00, 0.13, -1.00).normalize(),
+  back:  new THREE.Vector3(-1.00, 0.13,  0.00).normalize(),
+};
+/* distance that keeps the whole 140 mm figure framed at any aspect ratio */
+function fitDistance(){
+  const v = camera.fov * Math.PI/180;
+  const h = 2*Math.atan(Math.tan(v/2)*camera.aspect);
+  return Math.max((0.158/2)/Math.tan(v/2), (0.105/2)/Math.tan(h/2));
+}
+let view = 'three';
+function goTo(v){
+  view = v;
+  camera.position.copy(PIVOT).addScaledVector(VIEWS[v], fitDistance());
+  controls.target.copy(PIVOT);
+  controls.update();
+}
+goTo('three');
+
+/* the chest disc is blank geometry — the printed "in" mark is drawn here */
+function badge(){
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = '#ffffff'; x.beginPath(); x.arc(128,128,128,0,Math.PI*2); x.fill();
+  x.fillStyle = '#141414';
+  x.font = '700 148px Gabarito, ui-sans-serif, system-ui, sans-serif';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText('in', 128, 140);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(
+    new THREE.CircleGeometry(0.0052, 48),
+    new THREE.MeshStandardMaterial({map:t, roughness:0.34, metalness:0}));
+  m.rotation.y = Math.PI/2;             // glTF is Y-up: Blender (x,y,z) maps to (x,z,-y)
+  m.position.set(0.01088, 0.0541, 0);
+  return m;
+}
+
+const loadEl = document.getElementById('load');
+const fillEl = document.getElementById('fill');
+const pctEl  = document.getElementById('pct');
+
+function onLoad(gltf){
+  gltf.scene.traverse(o => {
+    if (!o.isMesh) return;
+    o.castShadow = true; o.receiveShadow = true;
+    const list = Array.isArray(o.material) ? o.material : [o.material];
+    const out = list.map(m => {
+      const n = m.name || '';
+      if (n.includes('glass')) return new THREE.MeshPhysicalMaterial({
+        color:0xEAF0FB, transparent:true, opacity:0.20, roughness:0.04, metalness:0,
+        clearcoat:1, clearcoatRoughness:0.03, depthWrite:false, side:THREE.DoubleSide});
+      m.metalness = 0;
+      m.roughness = n.includes('eye') ? 0.09 : 0.42;
+      m.vertexColors = true;
+      m.color.setRGB(1,1,1);
+      return m;
+    });
+    o.material = out.length === 1 ? out[0] : out;
+  });
+  gltf.scene.add(badge());
+  scene.add(gltf.scene);
+  loadEl.classList.add('gone');
+}
+
+const loader = new GLTFLoader();
+if (window.SOSHIE_GLB){
+  const bin = atob(window.SOSHIE_GLB), buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  delete window.SOSHIE_GLB;
+  fillEl.style.width = '100%';
+  loader.parse(buf.buffer, '', onLoad);
+} else {
+  loader.load('soshie.glb', onLoad, e => {
+    if (!e.lengthComputable) return;
+    const p = Math.round(e.loaded / e.total * 100);
+    fillEl.style.width = p + '%'; pctEl.textContent = p + '%';
+  });
+}
+
+const spin = document.getElementById('spin');
+spin.setAttribute('aria-pressed', String(controls.autoRotate));
+spin.onclick = () => {
+  controls.autoRotate = !controls.autoRotate;
+  spin.setAttribute('aria-pressed', String(controls.autoRotate));
+};
+for (const v of ['front','three','side','back'])
+  document.getElementById('v-'+v).onclick = () => goTo(v);
+renderer.domElement.addEventListener('pointerdown', () => {
+  controls.autoRotate = false;
+  spin.setAttribute('aria-pressed','false');
+});
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  goTo(view);
+});
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+</script>
