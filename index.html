@@ -247,6 +247,7 @@ scene.add(key, warm, hemi, lamp);
 
 const rig = new THREE.Group(); scene.add(rig);
 let head = null, armL = null, armR = null;
+const lids = [];          // {lid, lash} — one per eye
 
 /* framed on the head, with the tops of the arms in shot */
 const PIVOT = new THREE.Vector3(0, 0.0985, 0);
@@ -275,6 +276,33 @@ function badge(){
   m.rotation.y = Math.PI/2; m.position.set(0.01088, 0.0541, 0);
   return m;
 }
+/* There are no eyelids in this model: the eyes are 14 mm spheres poking through
+   sockets. So each lid is a skin-coloured cap swung on the eyeball's own centre,
+   and the lash — its own node now — rides the same hinge through the same arc. */
+const EYE_R = 0.00722;                       // a hair proud of the 7 mm eyeball
+const EYES  = [                              // glTF is Y-up: Blender (x,y,z) -> (x,z,-y)
+  {x: 0.0142, y: 0.0903, z: -0.00755, lash: 'LashL'},
+  {x: 0.0142, y: 0.0903, z:  0.00755, lash: 'LashR'},
+];
+const LID_OPEN = 0.524, LID_SHUT = -1.047;   // cap axis, 120deg to 30deg above the gaze
+
+function buildLids(root){
+  const skin = new THREE.MeshStandardMaterial({color:new THREE.Color('#F8D8C2'),
+                roughness:0.42, metalness:0});
+  const cap = new THREE.SphereGeometry(EYE_R, 28, 14, 0, Math.PI*2, 0, 1.309); // 75deg cap
+  for (const e of EYES){
+    const hinge = new THREE.Group();
+    hinge.position.set(e.x, e.y, e.z);
+    hinge.rotation.z = LID_OPEN;
+    hinge.add(new THREE.Mesh(cap, skin));
+    root.add(hinge);
+    head.attach(hinge);                      // keeps world placement, follows the head
+    const lash = root.getObjectByName(e.lash);
+    if (lash) head.attach(lash);
+    lids.push({hinge, lash});
+  }
+}
+
 function received(gltf){
   gltf.scene.traverse(o => {
     if (!o.isMesh) return;
@@ -288,6 +316,7 @@ function received(gltf){
   head = gltf.scene.getObjectByName('Head');
   armL = gltf.scene.getObjectByName('ArmL');
   armR = gltf.scene.getObjectByName('ArmR');
+  buildLids(gltf.scene);
   const body = gltf.scene.getObjectByName('Body');
   (body || gltf.scene).add(badge());
   rig.add(gltf.scene);
@@ -299,6 +328,29 @@ if (window.SOSHIE_GLB){
   delete window.SOSHIE_GLB;
   loader.parse(buf.buffer, '', received);
 } else loader.load('soshie.glb', received);
+
+/* blink: quick down, a beat shut, slower up — and now and then a second one */
+let blinkAmt = 0, blinkT = -1, nextBlink = 1.6 + Math.random()*3;
+function stepBlink(dt){
+  if (blinkT < 0){
+    nextBlink -= dt;
+    if (nextBlink <= 0) blinkT = 0;
+  } else {
+    blinkT += dt;
+    const DOWN = 0.085, SHUT = 0.045, UP = 0.135;
+    if (blinkT < DOWN)              blinkAmt = 1 - (1 - blinkT/DOWN)**2;
+    else if (blinkT < DOWN+SHUT)    blinkAmt = 1;
+    else if (blinkT < DOWN+SHUT+UP) blinkAmt = ((DOWN+SHUT+UP - blinkT)/UP)**1.6;
+    else {
+      blinkAmt = 0; blinkT = -1;
+      nextBlink = Math.random() < 0.24 ? 0.20 : 2.2 + Math.random()*3.8;
+    }
+  }
+  for (const {hinge, lash} of lids){
+    hinge.rotation.z = LID_OPEN + (LID_SHUT - LID_OPEN) * blinkAmt;
+    if (lash) lash.rotation.z = (LID_SHUT - LID_OPEN) * blinkAmt;
+  }
+}
 
 /* ---- she watches the pointer ---- */
 let px = 0, py = 0, follow = 0, lastMove = -1e9;
@@ -409,6 +461,7 @@ renderer.setAnimationLoop(now => {
     armL.rotation.x =  Math.sin(t*0.37+0.8)*0.030;
     armR.rotation.x = -Math.sin(t*0.33+2.4)*0.028;
   }
+  if (lids.length) stepBlink(dt);
   rig.position.y = Math.sin(t*0.9)*0.0009;        // breath, not a bounce
 
   renderer.render(scene, camera);

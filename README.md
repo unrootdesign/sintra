@@ -15,9 +15,15 @@ transition reads as a step no matter how the colours are eased.
 `mark.js` holds the chest mark as the supplied vector, filled straight onto a
 canvas with `Path2D` so it stays exact at any size.
 
-`soshie.glb` is exported as four nodes — `Body`, `Head`, `ArmL`, `ArmR` — each
-with its origin at the joint, so the head turns and the arms drift without a
-skeleton.
+`soshie.glb` is exported as six nodes — `Body`, `Head`, `ArmL`, `ArmR`,
+`LashL`, `LashR` — each with its origin at the joint, so the head turns, the
+arms drift, and the lashes swing without a skeleton.
+
+She has no eyelids: the eyes are 14 mm spheres poking through sockets, and
+there is nothing there to close. So each lid is a skin-coloured spherical cap
+swung on the eyeball's own centre, and the lash — its own node for exactly this
+reason — rides the same hinge through the same 90 degree arc. A blink that
+leaves the lashes behind does not read as a blink.
 
 ## Where the model comes from
 
