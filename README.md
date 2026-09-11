@@ -1,21 +1,19 @@
 # Soshie
 
-Two pages built from the eight STL parts of the Soshie print set.
+One page, built from the eight STL parts of the Soshie print set.
 
-- `/` — **Soshie works while you sleep.** A full day passes every sixty
-  seconds: the clock behind her sweeps, the sky runs from her own pink-to-yellow
-  gradient through dusk into night and back, and the same values light the
-  figure — warm at noon, dim and blue at four in the morning with a
-  screen-coloured lamp on her face. Work ships throughout. She watches the
-  pointer and shifts her weight the way someone standing does.
-- `/model/` — the figure on its own, rotatable, with the print numbers.
+A full day passes every sixty seconds. The clock behind her sweeps, the sky runs
+from her own pink-to-yellow gradient through dusk into night and back, and the
+same values light the figure — warm at noon, dim and blue at four in the morning
+with a screen-coloured lamp on her face. Work ships throughout. She follows the
+pointer and shifts her weight the way someone standing does.
 
-`mark.js` holds the chest mark as the supplied vector, drawn straight onto a
+`mark.js` holds the chest mark as the supplied vector, filled straight onto a
 canvas with `Path2D` so it stays exact at any size.
 
-The root model is exported as four nodes — `Body`, `Head`, `ArmL`, `ArmR` —
-each with its origin at the joint, so the head can turn and the arms can shift
-without a skeleton.
+`soshie.glb` is exported as four nodes — `Body`, `Head`, `ArmL`, `ArmR` — each
+with its origin at the joint, so the head turns and the arms drift without a
+skeleton.
 
 ## Where the model comes from
 
