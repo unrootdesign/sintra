@@ -124,8 +124,8 @@ const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
-renderer.toneMapping = THREE.NeutralToneMapping ?? THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.14;
+renderer.toneMapping = THREE.NoToneMapping;
+renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.getElementById('stage').appendChild(renderer.domElement);
@@ -135,9 +135,9 @@ const camera = new THREE.PerspectiveCamera(32, innerWidth/innerHeight, 0.01, 20)
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.05).texture;
-scene.environmentIntensity = 0.85;
+scene.environmentIntensity = 0.62;
 
-const key = new THREE.DirectionalLight(0xffffff, 2.5);
+const key = new THREE.DirectionalLight(0xffffff, 1.75);
 key.position.set(0.35, 0.42, 0.30);
 key.castShadow = true;
 key.shadow.mapSize.set(2048, 2048);
@@ -146,10 +146,10 @@ cam.left = -d; cam.right = d; cam.top = d; cam.bottom = -d; cam.near = 0.05; cam
 key.shadow.bias = -0.0009; key.shadow.radius = 4;
 scene.add(key);
 
-const fillLight = new THREE.DirectionalLight(0xdfe6ff, 0.6);
+const fillLight = new THREE.DirectionalLight(0xdfe6ff, 0.42);
 fillLight.position.set(-0.40, 0.20, -0.35);
 scene.add(fillLight);
-scene.add(new THREE.HemisphereLight(0xffffff, 0xEDE6F7, 1.05));
+scene.add(new THREE.HemisphereLight(0xffffff, 0xEDE6F7, 0.72));
 
 /* soft contact shadow so the figure sits on the ground instead of floating */
 const sc = document.createElement('canvas'); sc.width = sc.height = 256;
@@ -193,18 +193,29 @@ function goTo(v){
 }
 goTo('three');
 
-/* the chest disc is blank geometry — the printed "in" mark is drawn here */
+/* the chest disc is blank geometry — the printed mark is drawn here as shapes */
 function badge(){
-  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const S = 512, INK = '#141414';
+  const c = document.createElement('canvas'); c.width = c.height = S;
   const x = c.getContext('2d');
-  x.fillStyle = '#ffffff'; x.beginPath(); x.arc(128,128,128,0,Math.PI*2); x.fill();
-  x.fillStyle = '#141414';
-  x.font = '700 148px Gabarito, ui-sans-serif, system-ui, sans-serif';
-  x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.fillText('in', 128, 140);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  x.fillStyle = '#ffffff';
+  x.beginPath(); x.arc(S/2, S/2, S/2, 0, Math.PI*2); x.fill();
+
+  x.fillStyle = INK; x.strokeStyle = INK;
+  const bar = (X,Y,W,H) => { x.beginPath(); x.roundRect(X,Y,W,H,6); x.fill(); };
+  const W = 52;                        // stroke weight
+  bar(138, 140, 236, 48);              // the rule across the top
+  bar(138, 220, W, 152);               // i
+  bar(214, 220, W, 152);               // n, left stem
+  bar(322, 300, W, 72);                // n, right stem
+  x.lineWidth = W; x.lineCap = 'butt';
+  x.beginPath(); x.arc(294, 300, 54, Math.PI, Math.PI*2); x.stroke();  // n, shoulder
+
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
   const m = new THREE.Mesh(
-    new THREE.CircleGeometry(0.0052, 48),
+    new THREE.CircleGeometry(0.0052, 64),
     new THREE.MeshStandardMaterial({map:t, roughness:0.34, metalness:0}));
   m.rotation.y = Math.PI/2;             // glTF is Y-up: Blender (x,y,z) maps to (x,z,-y)
   m.position.set(0.01088, 0.0541, 0);
@@ -222,9 +233,6 @@ function onLoad(gltf){
     const list = Array.isArray(o.material) ? o.material : [o.material];
     const out = list.map(m => {
       const n = m.name || '';
-      if (n.includes('glass')) return new THREE.MeshPhysicalMaterial({
-        color:0xEAF0FB, transparent:true, opacity:0.20, roughness:0.04, metalness:0,
-        clearcoat:1, clearcoatRoughness:0.03, depthWrite:false, side:THREE.DoubleSide});
       m.metalness = 0;
       m.roughness = n.includes('eye') ? 0.09 : 0.42;
       m.vertexColors = true;
