@@ -1,0 +1,267 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Soshie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:ital,opsz,wght@1,9..144,400&display=swap">
+<style>
+  :root{
+    --outer:#EFEDEE; --edge:rgba(0,0,0,.06);
+    --ink:#FBF4F8; --dim:rgba(251,244,248,.60); --faint:rgba(251,244,248,.30);
+    --hair:rgba(251,244,248,.16);
+    --pink:#F79BCE; --lav:#A87DEC; --peri:#A7BCF5;
+    --disp:"Martian Mono",ui-monospace,monospace;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --ital:"Fraunces",Georgia,serif;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--outer:#0B0609;--edge:rgba(255,255,255,.07)}}
+  :root[data-theme="dark"]{--outer:#0B0609;--edge:rgba(255,255,255,.07)}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--outer);color:var(--ink);font-family:var(--mono);overflow:hidden}
+
+  /* the whole page is one dark card, inset from the window */
+  #card{position:fixed;inset:13px;border-radius:26px;overflow:hidden;border:1px solid var(--edge);
+    background:radial-gradient(125% 95% at 62% -12%,#5A1749 0%,#2E0B26 46%,#130511 100%)}
+  #stage{position:absolute;inset:0}
+  /* scrim so the headline always has a dark field under it, as on the reference */
+  #card::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:linear-gradient(100deg,rgba(19,5,17,.80) 0%,rgba(19,5,17,.52) 26%,
+      rgba(19,5,17,0) 56%)}
+  canvas{display:block}
+
+  .row{position:absolute;z-index:3;display:flex;align-items:center;gap:8px}
+  #top-r{top:20px;right:22px}
+  .pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink);background:rgba(10,4,9,.55);border:1px solid var(--hair);border-radius:999px;
+    padding:9px 16px;text-decoration:none;cursor:pointer;transition:.15s;backdrop-filter:blur(14px)}
+  .pill:hover{background:rgba(255,255,255,.12)}
+  .pill.solid{background:var(--ink);color:#190717;border-color:transparent;font-weight:700}
+  .pill.solid:hover{background:#fff}
+
+  #lede{position:absolute;z-index:3;left:34px;top:96px;max-width:min(52vw,620px)}
+  .eyebrow{display:flex;align-items:center;gap:9px;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--faint);margin-bottom:14px}
+  .eyebrow em{font-family:var(--ital);font-size:14px;letter-spacing:0;text-transform:none;
+    color:var(--dim)}
+  h1{margin:0;font-family:var(--disp);font-weight:600;letter-spacing:-.045em;line-height:1.08;
+    font-size:clamp(26px,3.9vw,54px);text-wrap:balance}
+
+  #foot{position:absolute;z-index:3;left:34px;bottom:34px;max-width:390px;display:flex;
+    flex-direction:column;gap:18px;align-items:flex-start}
+  #foot p{margin:0;font-size:11.5px;line-height:1.72;color:var(--dim)}
+  .cta{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.11em;
+    text-transform:uppercase;color:#190717;background:var(--ink);border:0;border-radius:999px;
+    padding:15px 26px;text-decoration:none;cursor:pointer;transition:transform .15s,background .15s}
+  .cta:hover{transform:translateY(-2px);background:#fff}
+
+  #rail{position:absolute;z-index:3;right:34px;top:50%;transform:translateY(-50%);
+    display:flex;flex-direction:column;gap:34px;text-align:right}
+  #rail b{display:block;font-family:var(--disp);font-weight:700;font-size:clamp(20px,2.4vw,31px);
+    letter-spacing:-.05em;line-height:1}
+  #rail span{font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
+
+  #views{position:absolute;z-index:3;left:50%;bottom:26px;transform:translateX(-50%);
+    display:flex;gap:5px}
+  #views button{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--dim);background:rgba(10,4,9,.5);border:1px solid var(--hair);border-radius:999px;
+    padding:8px 13px;cursor:pointer;backdrop-filter:blur(14px);transition:.15s}
+  #views button:hover{color:var(--ink);border-color:rgba(255,255,255,.34)}
+  #views button[aria-pressed="true"]{color:#190717;background:var(--ink);border-color:transparent}
+  button:focus-visible,a:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
+
+  #src{position:absolute;z-index:3;left:34px;bottom:12px;font-size:9px;letter-spacing:.08em;
+    text-transform:uppercase;color:rgba(251,244,248,.2)}
+
+  #load{position:absolute;inset:0;z-index:5;display:grid;place-content:center;gap:12px;
+    justify-items:center;background:radial-gradient(125% 95% at 62% -12%,#5A1749,#130511);
+    transition:opacity .6s}
+  #load.gone{opacity:0;pointer-events:none}
+  #load .bar{width:140px;height:2px;background:var(--hair);overflow:hidden;border-radius:2px}
+  #load .bar i{display:block;height:100%;width:4%;background:var(--pink);transition:width .25s}
+  #load span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+
+  @media (max-width:900px){
+    #card{inset:8px;border-radius:20px}
+    #lede{left:20px;top:82px;max-width:calc(100% - 40px)}
+    #rail{top:auto;bottom:150px;right:20px;transform:none;gap:18px}
+    #foot{left:20px;bottom:74px;max-width:calc(100% - 40px)}
+    #foot p{font-size:10.5px}
+    #src{display:none}
+    #views{bottom:18px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="card">
+  <div id="stage"></div>
+
+  <div id="top-r" class="row">
+    <a class="pill" href="soshie.glb" download>Download GLB</a>
+  </div>
+
+  <div id="lede">
+    <div class="eyebrow">Eight parts, <em>one figure</em></div>
+    <h1>Assembled and painted from the raw print files</h1>
+  </div>
+
+  <div id="rail">
+    <div><b>8</b><span>Printed parts</span></div>
+    <div><b>140</b><span>Millimetres tall</span></div>
+    <div><b>210k</b><span>Triangles</span></div>
+  </div>
+
+  <div id="foot">
+    <p>The parts export in shared world coordinates, so they assemble with no
+       transform at all. Every colour region is already its own mesh island —
+       studs, soles, each hair strand — so the paint is scripted per island
+       rather than brushed on by hand.</p>
+    <a class="cta" href="../">See her work a full day →</a>
+  </div>
+
+  <div id="views">
+    <button id="v-front">Front</button>
+    <button id="v-three" aria-pressed="true">3/4</button>
+    <button id="v-side">Side</button>
+    <button id="v-back">Back</button>
+    <button id="spin" aria-pressed="true">Auto</button>
+  </div>
+
+  <div id="src">Drag to rotate · scroll to zoom</div>
+
+  <div id="load"><div class="bar"><i id="fill"></i></div><span id="pct">Loading</span></div>
+</div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls}   from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader}      from 'three/addons/loaders/GLTFLoader.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {drawMark}        from '../mark.js';
+
+
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.NoToneMapping;
+stage.appendChild(renderer.domElement);
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 20);
+const pmrem  = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.05).texture;
+scene.environmentIntensity = 0.5;
+
+const key = new THREE.DirectionalLight(0xffffff, 2.3);
+key.position.set(0.34, 0.40, 0.32); scene.add(key);
+const warm = new THREE.DirectionalLight(0xFFC9E6, 0.75);
+warm.position.set(-0.42, 0.14, 0.18); scene.add(warm);
+const cool = new THREE.DirectionalLight(0x9DB4FF, 0.55);
+cool.position.set(0.10, -0.22, -0.40); scene.add(cool);
+scene.add(new THREE.HemisphereLight(0xF6E4FF, 0x2A0A22, 0.85));
+
+const PIVOT = new THREE.Vector3(0, 0.070, 0);
+const VIEWS = {
+  front: new THREE.Vector3( 1.00, 0.13,  0.00).normalize(),
+  three: new THREE.Vector3( 0.80, 0.22, -0.56).normalize(),
+  side:  new THREE.Vector3( 0.00, 0.13, -1.00).normalize(),
+  back:  new THREE.Vector3(-1.00, 0.13,  0.00).normalize(),
+};
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.075;
+controls.minDistance = 0.11; controls.maxDistance = 0.9;
+controls.autoRotate = true; controls.autoRotateSpeed = 0.8;
+
+let view = 'three';
+function frame(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w/h;
+  const v = camera.fov*Math.PI/180;
+  const hf = 2*Math.atan(Math.tan(v/2)*camera.aspect);
+  const wide = w >= 900;
+  const dist = Math.max(((wide?0.235:0.300)/2)/Math.tan(v/2), (0.105/2)/Math.tan(hf/2));
+  camera.position.copy(PIVOT).addScaledVector(VIEWS[view], dist);
+  camera.lookAt(PIVOT);
+  // keep the figure clear of the headline on wide screens
+  if (wide){
+    const visW = 2*dist*Math.tan(hf/2);
+    const right = new THREE.Vector3().crossVectors(VIEWS[view], new THREE.Vector3(0,1,0)).normalize();
+    const pan = right.multiplyScalar(visW*0.155);
+    camera.position.add(pan); controls.target.copy(PIVOT).add(pan);
+  } else {
+    controls.target.copy(PIVOT);
+  }
+  camera.updateProjectionMatrix();
+  controls.update();
+}
+frame();
+
+function badge(){
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  drawMark(c.getContext('2d'), 512);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const m = new THREE.Mesh(new THREE.CircleGeometry(0.0059, 64),
+        new THREE.MeshStandardMaterial({map:t, roughness:0.34, metalness:0, transparent:true}));
+  m.rotation.y = Math.PI/2;            // glTF is Y-up: Blender (x,y,z) maps to (x,z,-y)
+  m.position.set(0.01088, 0.0541, 0);
+  return m;
+}
+
+const loadEl = document.getElementById('load'), fillEl = document.getElementById('fill');
+function onLoad(gltf){
+  gltf.scene.traverse(o => {
+    if (!o.isMesh) return;
+    const list = Array.isArray(o.material) ? o.material : [o.material];
+    const out = list.map(m => {
+      m.metalness = 0; m.roughness = (m.name||'').includes('eye') ? 0.09 : 0.42;
+      m.vertexColors = true; m.color.setRGB(1,1,1); return m;
+    });
+    o.material = out.length === 1 ? out[0] : out;
+  });
+  gltf.scene.add(badge());
+  scene.add(gltf.scene);
+  loadEl.classList.add('gone');
+}
+const loader = new GLTFLoader();
+if (window.SOSHIE_GLB){
+  const bin = atob(window.SOSHIE_GLB), buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  delete window.SOSHIE_GLB;
+  fillEl.style.width = '100%';
+  loader.parse(buf.buffer, '', onLoad);
+} else {
+  loader.load('soshie.glb', onLoad, e => {
+    if (!e.lengthComputable) return;
+    const p = Math.round(e.loaded/e.total*100);
+    fillEl.style.width = p + '%';
+    document.getElementById('pct').textContent = p + '%';
+  });
+}
+
+const spin = document.getElementById('spin');
+spin.onclick = () => {
+  controls.autoRotate = !controls.autoRotate;
+  spin.setAttribute('aria-pressed', String(controls.autoRotate));
+};
+for (const v of ['front','three','side','back']){
+  document.getElementById('v-'+v).onclick = () => {
+    view = v; frame();
+    document.querySelectorAll('#views button[id^=v-]').forEach(b =>
+      b.setAttribute('aria-pressed', String(b.id === 'v-'+v)));
+  };
+}
+renderer.domElement.addEventListener('pointerdown', () => {
+  controls.autoRotate = false; spin.setAttribute('aria-pressed','false');
+});
+addEventListener('resize', frame);
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+</script>

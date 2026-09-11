@@ -1,27 +1,25 @@
-# Soshie — 3D figure viewer
+# Soshie
 
-An in-browser viewer for the Soshie astronaut figure: the eight STL parts of the
-print set, assembled, coloured, and served as a single glTF binary.
+Two pages built from the eight STL parts of the Soshie print set.
 
-- `index.html` — the viewer (three.js from jsDelivr, no build step)
-- `soshie.glb` — the model, 210k triangles, colour baked into vertex colours
-- `delegate/` — *Hand It To Soshie*: briefs land on you, you hand each one to
-  her, and what comes back is the finished post. No start screen, no menus —
-  the page opens already playing. Uses a lighter 91k-triangle build.
+- `/` — **While You Sleep.** A full day passes every sixty seconds: an analog
+  clock sweeps, the sky runs from her own pink-to-yellow gradient through dusk
+  into night and back, and the same light falls on the figure. Work keeps
+  landing and keeps shipping through all of it. Click a brief to push it along
+  early; she gets to it either way.
+- `/model/` — the figure on its own, rotatable, with the print numbers.
+
+`mark.js` holds the chest mark as the supplied vector, drawn straight onto a
+canvas with `Path2D` so it stays exact at any size.
 
 ## Where the model comes from
 
-The STLs export in shared world coordinates, so the eight parts assemble with no
-transform at all. Every colour region of the figure — studs, belt, soles, each
-hair strand — is already its own loose mesh island, so the paint job is assigned
-per island by a script rather than hand-painted, with vertical gradients on the
-suit and the boots.
-
-Both arms are lowered. The raised arm seen in the marketing render is not in the
-STL set.
+The STLs export in shared world coordinates, so the eight parts assemble with
+no transform at all. Every colour region — studs, belt, soles, each hair strand
+— is already its own loose mesh island, so the paint is assigned per island by
+a script, with vertical gradients on the suit and boots. Both arms are lowered;
+the raised arm in the marketing render is not in the STL set.
 
 ## Publishing
 
-GitHub Pages serves this folder as-is — no build, no bundler. Push to `main`,
-then in **Settings → Pages** choose *Deploy from a branch*, branch `main`, folder
-`/ (root)`.
+GitHub Pages serves this folder as-is — no build, no bundler. Push to `main`.
