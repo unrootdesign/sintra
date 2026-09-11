@@ -1,160 +1,149 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Delegation Drill</title>
+<title>Hand It To Soshie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;700;800&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:ital,opsz,wght@1,9..144,400&display=swap">
 <style>
-  /* One committed visual world: the figure's own pastel palette, lit bright. */
   :root{
-    --ground:#FBF5FE; --ground-2:#EADCF6;
-    --ink:#2A2036; --muted:#7C6E8E; --line:rgba(42,32,54,.12);
-    --panel:rgba(255,255,255,.82);
-    --pink:#F79BCE; --lav:#A87DEC; --peri:#A7BCF5; --sky:#9CC3E6;
-    --sun:#FCD05A; --deep:#5B3BAC; --ok:#3EB489; --bad:#E8657F;
-    --display:"Gabarito",ui-sans-serif,system-ui,sans-serif;
-    --body:"Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;
-    --mono:"DM Mono",ui-monospace,Menlo,monospace;
+    --outer:#EFEDEE; --edge:rgba(0,0,0,.06);
+    --ink:#FBF4F8; --dim:rgba(251,244,248,.60); --faint:rgba(251,244,248,.30);
+    --hair:rgba(251,244,248,.16); --glass:rgba(10,4,9,.55);
+    --pink:#F79BCE; --lav:#A87DEC; --peri:#A7BCF5; --mint:#8BE0C2;
+    --disp:"Martian Mono",ui-monospace,monospace;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --ital:"Fraunces",Georgia,serif;
   }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--outer:#0B0609;--edge:rgba(255,255,255,.07)}}
+  :root[data-theme="dark"]{--outer:#0B0609;--edge:rgba(255,255,255,.07)}
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{
-    margin:0;overflow:hidden;color:var(--ink);font-family:var(--body);
-    background:radial-gradient(130% 100% at 22% -15%,var(--ground) 0%,var(--ground-2) 100%);
-    -webkit-user-select:none;user-select:none;
-  }
-  #stage{position:fixed;inset:0;z-index:0}
+  body{margin:0;background:var(--outer);color:var(--ink);font-family:var(--mono);
+    overflow:hidden;-webkit-user-select:none;user-select:none}
+
+  #card{position:fixed;inset:13px;border-radius:26px;overflow:hidden;border:1px solid var(--edge);
+    background:radial-gradient(125% 95% at 50% -12%,#5A1749 0%,#2E0B26 46%,#130511 100%)}
+  #stage{position:absolute;inset:0;z-index:0}
   canvas{display:block}
 
-  /* ---- top bar ---- */
-  #top{position:fixed;top:0;left:0;right:0;z-index:3;padding:20px 26px;
-    display:flex;align-items:flex-start;justify-content:space-between;gap:16px;pointer-events:none}
-  .brand h1{margin:0;font-family:var(--display);font-weight:800;font-size:21px;letter-spacing:-.02em}
-  .brand p{margin:3px 0 0;font-size:12.5px;color:var(--muted);max-width:30ch}
-  #hud{display:flex;gap:8px}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;
-    padding:7px 13px;text-align:center;backdrop-filter:blur(10px);min-width:74px}
-  .stat b{display:block;font-family:var(--mono);font-weight:500;font-size:17px;
-    font-variant-numeric:tabular-nums;line-height:1.2}
-  .stat span{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  .stat.warn b{color:var(--bad)}
+  /* ---- chrome ---- */
+  #nav{position:absolute;z-index:5;top:20px;left:22px}
+  #nav ul{margin:0;padding:6px 8px;list-style:none;display:flex;gap:2px;align-items:center;
+    background:var(--glass);border:1px solid var(--hair);border-radius:999px;backdrop-filter:blur(14px)}
+  #nav .mark{width:22px;height:22px;border-radius:50%;margin:0 4px 0 2px}
+  #nav a{color:var(--dim);text-decoration:none;font-size:11px;padding:5px 10px;border-radius:999px;
+    transition:.15s}
+  #nav a:hover,#nav a[aria-current]{color:var(--ink);background:rgba(255,255,255,.09)}
+  a:focus-visible,.brief:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
 
-  /* ---- incoming work ---- */
-  #queue{position:fixed;z-index:2;right:26px;top:96px;width:290px;
-    display:flex;flex-direction:column;gap:9px;pointer-events:none}
-  .card{pointer-events:auto;background:#fff;border:1px solid var(--line);border-radius:13px;
-    padding:12px 13px 10px;box-shadow:0 5px 18px -8px rgba(42,32,54,.32);cursor:grab;
-    animation:in .28s cubic-bezier(.2,.9,.3,1.2);touch-action:none}
-  @keyframes in{from{opacity:0;transform:translateX(26px) scale(.95)}}
-  .card.picked{outline:2px solid var(--lav);outline-offset:2px}
-  .card.drag{position:fixed;z-index:9;width:290px;cursor:grabbing;
-    box-shadow:0 16px 34px -12px rgba(42,32,54,.45);transform:rotate(-1.4deg)}
-  .card .from{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  .card .txt{font-size:13.5px;font-weight:500;line-height:1.32;margin:3px 0 9px}
-  .fuse{height:3px;border-radius:2px;background:rgba(42,32,54,.1);overflow:hidden}
-  .fuse i{display:block;height:100%;background:var(--lav);transition:background .2s}
-  .card.hot .fuse i{background:var(--bad)}
+  #score{position:absolute;z-index:5;top:20px;right:22px;display:flex;gap:7px}
+  .tile{background:var(--glass);border:1px solid var(--hair);border-radius:14px;padding:8px 14px;
+    text-align:right;backdrop-filter:blur(14px)}
+  .tile b{display:block;font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:-.04em;
+    line-height:1.15;font-variant-numeric:tabular-nums}
+  .tile span{font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
 
-  /* ---- the team ---- */
-  #dock{position:fixed;z-index:3;left:0;right:0;bottom:0;padding:0 20px 18px;
-    display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
-  .who{background:var(--panel);border:1.5px solid var(--line);border-radius:14px;
-    padding:9px 14px 10px;min-width:104px;text-align:center;backdrop-filter:blur(10px);
-    cursor:pointer;transition:transform .12s,border-color .12s,background .12s}
-  .who .dot{width:11px;height:11px;border-radius:50%;margin:0 auto 5px;background:var(--c)}
-  .who b{display:block;font-family:var(--display);font-weight:700;font-size:14px}
-  .who span{font-size:10px;color:var(--muted);letter-spacing:.01em}
-  .who.over{transform:translateY(-5px) scale(1.04);border-color:var(--c);background:#fff}
-  .who.good{animation:pop .42s}
-  .who.nope{animation:no .34s}
-  @keyframes pop{0%{transform:none}35%{transform:translateY(-9px) scale(1.09)}100%{transform:none}}
-  @keyframes no{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  .colhead{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
+    display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+  .colhead.busy{color:var(--pink)}
 
-  /* ---- your desk ---- */
-  #desk{position:fixed;z-index:3;left:26px;bottom:96px;display:flex;align-items:center;gap:10px}
-  #desk .cap{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  #slots{display:flex;gap:5px}
-  #slots i{width:26px;height:7px;border-radius:3px;background:rgba(42,32,54,.13)}
-  #slots i.on{background:var(--bad)}
+  /* ---- incoming briefs ---- */
+  #in{position:absolute;z-index:4;left:26px;top:78px;width:268px}
+  #in-list{display:flex;flex-direction:column;gap:8px}
+  .brief{background:var(--glass);border:1px solid var(--hair);border-radius:14px;padding:12px 14px;
+    cursor:grab;touch-action:none;backdrop-filter:blur(14px);
+    animation:slidein .34s cubic-bezier(.2,.9,.3,1.15)}
+  .brief:hover{border-color:rgba(255,255,255,.4)}
+  .brief .src{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .brief .txt{font-size:12.5px;line-height:1.42;margin-top:5px}
+  .brief.drag{position:fixed;z-index:20;width:268px;cursor:grabbing;pointer-events:none;
+    transform:rotate(-1.6deg);border-color:var(--pink);
+    box-shadow:0 20px 44px -16px rgba(0,0,0,.7)}
+  .brief.leaving{animation:fly .34s ease-in forwards}
+  @keyframes slidein{from{opacity:0;transform:translateX(-22px)}}
+  @keyframes fly{to{opacity:0;transform:translateX(120px) scale(.86)}}
 
-  /* ---- overlays ---- */
-  .veil{position:fixed;inset:0;z-index:8;display:grid;place-content:center;justify-items:center;
-    gap:16px;text-align:center;padding:32px;
-    background:radial-gradient(130% 100% at 22% -15%,rgba(251,245,254,.94),rgba(234,220,246,.96))}
-  .veil[hidden]{display:none}
-  .veil h2{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(30px,5.6vw,52px);
-    letter-spacing:-.03em;text-wrap:balance;max-width:16ch}
-  .veil p{margin:0;max-width:44ch;color:var(--muted);font-size:15px;line-height:1.55}
-  .veil .score{font-family:var(--mono);font-size:13px;color:var(--ink);
-    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 18px;
-    display:grid;gap:5px;font-variant-numeric:tabular-nums}
-  .veil .score em{font-style:normal;color:var(--muted)}
-  button.go{font-family:var(--display);font-weight:700;font-size:15px;color:#fff;
-    background:var(--deep);border:0;border-radius:999px;padding:13px 30px;cursor:pointer;
-    transition:transform .12s,background .12s}
-  button.go:hover{transform:translateY(-2px);background:#4B2F92}
-  button.go:focus-visible{outline:3px solid var(--lav);outline-offset:3px}
-  .hint{font-size:12px;color:var(--muted)}
+  /* ---- the drop target ---- */
+  #drop{position:absolute;z-index:1;left:50%;top:52%;width:290px;height:330px;
+    transform:translate(-50%,-50%);border-radius:50%;border:1.5px dashed transparent;
+    transition:border-color .18s,background .18s}
+  #drop.armed{border-color:rgba(247,155,206,.55);background:rgba(247,155,206,.07)}
+  #drop.hit{border-color:var(--pink);background:rgba(247,155,206,.16)}
+  #busy{position:absolute;z-index:4;left:50%;top:calc(52% + 176px);transform:translateX(-50%);
+    font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--pink);opacity:0;
+    transition:opacity .2s;white-space:nowrap}
+  #busy.on{opacity:1}
 
-  #flash{position:fixed;z-index:7;left:50%;top:23%;transform:translateX(-50%);
-    font-family:var(--display);font-weight:800;font-size:24px;pointer-events:none;opacity:0}
-  #flash.show{animation:fl .75s}
-  @keyframes fl{0%{opacity:0;transform:translate(-50%,8px)}
-    22%{opacity:1;transform:translate(-50%,-4px)}100%{opacity:0;transform:translate(-50%,-20px)}}
+  /* ---- shipped ---- */
+  #out{position:absolute;z-index:4;right:26px;top:78px;width:290px}
+  #out-list{display:flex;flex-direction:column;gap:8px}
+  .done{background:rgba(251,244,248,.96);color:#1B0718;border-radius:14px;padding:12px 14px;
+    animation:pop .42s cubic-bezier(.2,.9,.3,1.2)}
+  .done .cap{font-size:12.5px;line-height:1.42}
+  .done .tag{margin-top:8px;padding-top:8px;border-top:1px solid rgba(27,7,24,.14);
+    font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(27,7,24,.52);
+    display:flex;align-items:center;gap:6px}
+  .done .tag i{width:6px;height:6px;border-radius:50%;background:#2BA97F;display:block}
+  @keyframes pop{from{opacity:0;transform:translateX(26px) scale(.94)}}
 
-  @media (max-width:880px){
-    #queue{right:14px;left:14px;width:auto;top:88px}
-    .card.drag{width:min(290px,calc(100vw - 28px))}
-    #desk{left:14px;bottom:auto;top:158px}
-    .who{min-width:88px;padding:7px 10px 8px}
-    .who span{display:none}
-    #dock{gap:6px;padding:0 12px 12px}
+  #hint{position:absolute;z-index:5;left:26px;bottom:22px;font-size:10.5px;color:var(--dim);
+    display:flex;align-items:center;gap:8px}
+  #hint em{font-family:var(--ital);font-size:14px;color:var(--ink)}
+  #hint .k{border:1px solid var(--hair);border-radius:6px;padding:2px 7px;font-size:9px;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+
+  @media (max-width:1040px){
+    #in,#out{width:240px}
+    #out{width:250px}
+    #drop{width:230px}
+  }
+  @media (max-width:860px){
+    #card{inset:8px;border-radius:20px}
+    #in{left:14px;right:14px;width:auto;top:70px}
+    #in-list{flex-direction:row;overflow-x:auto;padding-bottom:4px}
+    .brief{min-width:200px;flex:0 0 auto}
+    .brief.drag{width:200px}
+    #out{left:14px;right:14px;width:auto;top:auto;bottom:58px}
+    #out-list{flex-direction:row;overflow-x:auto}
+    .done{min-width:210px;flex:0 0 auto}
+    #drop{top:50%;height:220px}
+    #busy{top:calc(50% + 120px)}
+    #hint{bottom:16px;left:14px;font-size:9.5px}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
-<div id="stage"></div>
+<div id="card">
+  <div id="stage"></div>
+  <div id="drop"></div>
 
-<div id="top">
-  <div class="brand">
-    <h1>Delegation Drill</h1>
-    <p>Work lands on you all shift. Hand each job to the specialist who owns it.</p>
+  <nav id="nav">
+    <ul>
+      <li><canvas class="mark" id="mark" width="64" height="64"></canvas></li>
+      <li><a href="../">Model</a></li>
+      <li><a href="./" aria-current="page">Game</a></li>
+      <li><a href="https://github.com/unrootdesign/sintra">Source</a></li>
+    </ul>
+  </nav>
+
+  <div id="score">
+    <div class="tile"><b id="s-done">0</b><span>Shipped</span></div>
+    <div class="tile"><b id="s-hours">0.0h</b><span>Not your work</span></div>
   </div>
-  <div id="hud">
-    <div class="stat"><b id="t-clock">1:00</b><span>Shift</span></div>
-    <div class="stat"><b id="t-done">0</b><span>Delegated</span></div>
-    <div class="stat"><b id="t-combo">×1</b><span>Streak</span></div>
-  </div>
-</div>
 
-<div id="queue"></div>
+  <section id="in">
+    <div class="colhead" id="in-head"><span>Landing on you</span><span id="in-n">0</span></div>
+    <div id="in-list"></div>
+  </section>
 
-<div id="desk">
-  <span class="cap">Your desk</span>
-  <div id="slots"></div>
-</div>
+  <section id="out">
+    <div class="colhead"><span>Soshie shipped</span><span>Social media</span></div>
+    <div id="out-list"></div>
+  </section>
 
-<div id="dock"></div>
+  <div id="busy">working…</div>
 
-<div id="flash"></div>
-
-<div class="veil" id="start">
-  <h2>You cannot do all of it yourself.</h2>
-  <p>Twelve kinds of work, one of you. Drag each job onto the right specialist —
-     or tap the job, then tap the name. Let five pile up on your desk and the shift is over.</p>
-  <button class="go" id="btn-start">Start the shift</button>
-  <span class="hint">60 seconds · 6 specialists</span>
-</div>
-
-<div class="veil" id="over" hidden>
-  <h2 id="o-title">Shift over</h2>
-  <p id="o-line"></p>
-  <div class="score">
-    <div><em>Delegated</em> <b id="o-done">0</b></div>
-    <div><em>Best streak</em> <b id="o-best">×1</b></div>
-    <div><em>Work you never touched</em> <b id="o-hours">0h</b></div>
-  </div>
-  <button class="go" id="btn-again">Run it again</button>
+  <div id="hint">Drag a brief onto her — or just click it. <em>She takes it from there.</em></div>
 </div>
 
 <script type="importmap">
@@ -168,100 +157,85 @@ import * as THREE from 'three';
 import {GLTFLoader}      from 'three/addons/loaders/GLTFLoader.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 
-/* ------------------------------------------------ the team ---- */
-const TEAM = [
-  {id:'soshie', name:'Soshie', role:'Social media', c:'#F79BCE'},
-  {id:'penn',   name:'Penn',   role:'Copywriter',   c:'#A87DEC'},
-  {id:'dexter', name:'Dexter', role:'Data analyst', c:'#7FA6F0'},
-  {id:'cassie', name:'Cassie', role:'Support',      c:'#6FC0D8'},
-  {id:'milli',  name:'Milli',  role:'Sales',        c:'#F0B23E'},
-  {id:'seomi',  name:'Seomi',  role:'SEO',          c:'#8C6FD8'},
+/* ---------------------------------------------- the work ---- */
+const WORK = [
+ ['Announce the spring drop',        'New drop lands Tuesday. Same hands, better everything.', 'Scheduled · Tue 09:00'],
+ ['A big account just tagged us',    'Screenshotted, framed, and now our whole week is made.', 'Replied · 2 min'],
+ ['Nobody watches our Reels',        'Hook in the first 1.2 seconds. Three cuts. Caption on frame one.', '3 Reels drafted'],
+ ['Turn the case study into posts',  'Six slides: the problem, the number, the fix.', 'Carousel · 6 slides'],
+ ['What do we post on Friday?',      'Behind the scenes. Friday is for faces, not products.', 'Queued · Fri 17:00'],
+ ['This comment thread is heating up','Answered in public, receipts attached, tone kept warm.', 'Replied · 1 min'],
+ ['We need a month of content',      'Twenty posts, four pillars, three formats.', 'Calendar · March'],
+ ['Find what is trending for us',    'Three sounds under 50k uses. Two still climbing.', 'Trends · 3 found'],
+ ['Our captions all sound the same', 'Rewrote twelve. Cut every “excited to announce”.', '12 rewritten'],
+ ['Repurpose the newsletter',        'One thread, eight posts, zero new writing.', 'Thread · 8 posts'],
 ];
+const FROM = ['Inbox','Slack','A customer','Your co-founder','Instagram','The calendar'];
 
-const JOBS = [
-  ['soshie','Schedule this week’s Instagram posts'],
-  ['soshie','Find trending audio for three Reels'],
-  ['soshie','Reply to the comments on the launch post'],
-  ['soshie','Plan a content calendar for March'],
-  ['penn',  'Write ad copy for the spring launch'],
-  ['penn',  'Rewrite the pricing page headline'],
-  ['penn',  'Draft descriptions for 12 new products'],
-  ['penn',  'Turn this case study into a landing page'],
-  ['dexter','Why did checkout conversion drop 18%?'],
-  ['dexter','Forecast Q3 revenue from last year’s numbers'],
-  ['dexter','Break down churn by plan and cohort'],
-  ['dexter','Which ad spend actually paid back?'],
-  ['cassie','47 tickets unanswered since Friday'],
-  ['cassie','Customer wants a refund on order #4412'],
-  ['cassie','Write a reply to this one-star review'],
-  ['cassie','Shipping delay — tell the affected buyers'],
-  ['milli', 'Cold email the 40 webinar leads'],
-  ['milli', 'Build the pitch for Thursday’s demo'],
-  ['milli', 'Follow up on 12 stalled deals'],
-  ['milli', 'Write a call script for enterprise prospects'],
-  ['seomi', 'Our blog dropped off page one'],
-  ['seomi', 'Pick keywords for the new landing page'],
-  ['seomi', 'Fix the meta descriptions site-wide'],
-  ['seomi', 'Audit why Google deindexed 30 pages'],
-];
-const SENDERS = ['Inbox','Slack','A customer','Your co-founder','Analytics','The calendar'];
+/* ---------------------------------------------- the mark ---- */
+function drawMark(x, S){
+  const s = S/512;
+  x.clearRect(0,0,S,S);
+  x.fillStyle='#fff'; x.beginPath(); x.arc(256*s,256*s,232*s,0,Math.PI*2); x.fill();
+  const L=56*s, T=140*s, k=(400/300)*s;
+  const R=(X,Y,W,H)=>{x.beginPath();x.roundRect(L+X*k,T+Y*k,W*k,H*k,7*s);x.fill();};
+  x.fillStyle='#141414';
+  R(0,0,100,50); R(0,68,100,107); R(145,0,155,175);
+  x.fillStyle='#fff';
+  x.beginPath(); x.roundRect(L+200*k,T+58*k,44*k,140*k,[20*s,20*s,0,0]); x.fill();
+}
+drawMark(document.getElementById('mark').getContext('2d'), 64);
 
-/* ------------------------------------------------ 3D Soshie ---- */
+/* ---------------------------------------------- 3D ---- */
+const stage = document.getElementById('stage');
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.NoToneMapping;
-document.getElementById('stage').appendChild(renderer.domElement);
+stage.appendChild(renderer.domElement);
 
 const scene  = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(30, innerWidth/innerHeight, 0.01, 20);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 20);
 const pmrem  = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.05).texture;
-scene.environmentIntensity = 0.62;
+scene.environmentIntensity = 0.5;
 
-const key = new THREE.DirectionalLight(0xffffff, 1.75);
-key.position.set(0.35, 0.42, 0.30); scene.add(key);
-const fillL = new THREE.DirectionalLight(0xdfe6ff, 0.42);
-fillL.position.set(-0.40, 0.20, -0.35); scene.add(fillL);
-scene.add(new THREE.HemisphereLight(0xffffff, 0xEDE6F7, 0.72));
+const key = new THREE.DirectionalLight(0xffffff, 2.3);
+key.position.set(0.34, 0.40, 0.32); scene.add(key);
+const warm = new THREE.DirectionalLight(0xFFC9E6, 0.75);
+warm.position.set(-0.42, 0.14, 0.18); scene.add(warm);
+const cool = new THREE.DirectionalLight(0x9DB4FF, 0.55);
+cool.position.set(0.10, -0.22, -0.40); scene.add(cool);
+scene.add(new THREE.HemisphereLight(0xF6E4FF, 0x2A0A22, 0.85));
 
 const rig = new THREE.Group(); scene.add(rig);
-
 const PIVOT = new THREE.Vector3(0, 0.070, 0);
-function place(){
-  const v = camera.fov*Math.PI/180;
-  const h = 2*Math.atan(Math.tan(v/2)*camera.aspect);
-  const wide = innerWidth >= 880;
-  const dist = Math.max((( wide ? 0.250 : 0.330)/2)/Math.tan(v/2), (0.105/2)/Math.tan(h/2));
-  const dir = new THREE.Vector3(0.86, 0.17, -0.48).normalize();
-  camera.position.copy(PIVOT).addScaledVector(dir, dist);
+const DIR   = new THREE.Vector3(0.84, 0.19, -0.50).normalize();
+
+function frame(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w/h;
+  const v  = camera.fov*Math.PI/180;
+  const hf = 2*Math.atan(Math.tan(v/2)*camera.aspect);
+  const dist = Math.max(((w>=860 ? 0.255 : 0.330)/2)/Math.tan(v/2), (0.105/2)/Math.tan(hf/2));
+  camera.position.copy(PIVOT).addScaledVector(DIR, dist);
   camera.lookAt(PIVOT);
-  // slide the figure off the panels: left on wide screens, low on narrow ones
-  const visW = 2*dist*Math.tan(h/2), visH = 2*dist*Math.tan(v/2);
-  const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0,1,0)).normalize();
-  const pan = wide ? right.multiplyScalar(-visW*0.19) : new THREE.Vector3(0, -visH*0.05, 0);
-  camera.position.add(pan);
-  camera.lookAt(PIVOT.clone().add(pan));
   camera.updateProjectionMatrix();
 }
-place();
+frame();
 
 function badge(){
-  const S=512, INK='#141414';
-  const c=document.createElement('canvas'); c.width=c.height=S;
-  const x=c.getContext('2d');
-  x.fillStyle='#fff'; x.beginPath(); x.arc(S/2,S/2,S/2,0,Math.PI*2); x.fill();
-  x.fillStyle=INK;
-  const r=(X,Y,W,H)=>{x.beginPath();x.roundRect(X,Y,W,H,4);x.fill();};
-  r(138,169,236,42); r(138,237,46,106); r(204,237,46,106); r(204,237,170,46); r(328,237,46,106);
-  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
-  const m=new THREE.Mesh(new THREE.CircleGeometry(0.0052,64),
-        new THREE.MeshStandardMaterial({map:t,roughness:.34,metalness:0}));
-  m.rotation.y=Math.PI/2; m.position.set(0.01088,0.0541,0);
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  drawMark(c.getContext('2d'), 512);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const m = new THREE.Mesh(new THREE.CircleGeometry(0.0059, 64),
+        new THREE.MeshStandardMaterial({map:t, roughness:.34, metalness:0, transparent:true}));
+  m.rotation.y = Math.PI/2; m.position.set(0.01088, 0.0541, 0);
   return m;
 }
 
-const loader = new GLTFLoader();
 function received(gltf){
   gltf.scene.traverse(o=>{
     if(!o.isMesh) return;
@@ -275,224 +249,134 @@ function received(gltf){
   gltf.scene.add(badge());
   rig.add(gltf.scene);
 }
+const loader = new GLTFLoader();
 if (window.SOSHIE_GLB){
   const bin=atob(window.SOSHIE_GLB), buf=new Uint8Array(bin.length);
   for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
   delete window.SOSHIE_GLB;
   loader.parse(buf.buffer,'',received);
-} else {
-  loader.load('soshie-lite.glb', received);
-}
+} else loader.load('soshie-lite.glb', received);
 
-/* reactions: a hop when a job lands right, a shake when it does not */
-let react = null;
-const cheer = ok => react = {ok, t:0};
+let hop = null;
+const bounce = () => hop = 0;
 
-/* ------------------------------------------------ game ---- */
-const ROUND = 60, DESK_MAX = 5, QUEUE_MAX = 4;
+/* ---------------------------------------------- play ---- */
 const el = id => document.getElementById(id);
-const dock = el('dock'), queue = el('queue'), slots = el('slots');
+const inList = el('in-list'), outList = el('out-list'), dropZone = el('drop');
+const MAX_IN = 3, WORK_MS = 950;
 
-TEAM.forEach(p=>{
-  const d=document.createElement('div');
-  d.className='who'; d.dataset.who=p.id; d.style.setProperty('--c',p.c);
-  d.innerHTML = `<div class="dot"></div><b>${p.name}</b><span>${p.role}</span>`;
-  dock.appendChild(d);
-});
-for(let i=0;i<DESK_MAX;i++) slots.appendChild(document.createElement('i'));
+let shipped = 0, working = 0, bag = [], waiting = [], nextIn = 0.6;
 
-let G = null;
-function reset(){
-  G = {live:false, t:ROUND, done:0, combo:1, best:1, desk:0, cards:[], next:1.1, bag:[]};
-}
-reset();
-
-function draw(){
-  if (!G.bag.length){ G.bag = JOBS.map((_,i)=>i); for(let i=G.bag.length-1;i>0;i--){
-    const j=(Math.random()*(i+1))|0; [G.bag[i],G.bag[j]]=[G.bag[j],G.bag[i]]; } }
-  return JOBS[G.bag.pop()];
+function pick(){
+  if (!bag.length){ bag = WORK.map((_,i)=>i);
+    for (let i=bag.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [bag[i],bag[j]]=[bag[j],bag[i]]; } }
+  return WORK[bag.pop()];
 }
 
-function spawn(){
-  if (G.cards.length >= QUEUE_MAX) return;
-  const [who, text] = draw();
-  const life = 11 - 4.5*(1 - G.t/ROUND);          // patience shortens as the shift wears on
+function addBrief(){
+  if (waiting.length >= MAX_IN) return;
+  const [brief, caption, tag] = pick();
   const node = document.createElement('div');
-  node.className = 'card';
-  node.innerHTML = `<div class="from">${SENDERS[(Math.random()*SENDERS.length)|0]}</div>
-                    <div class="txt">${text}</div><div class="fuse"><i></i></div>`;
-  queue.appendChild(node);
-  const card = {who, node, life, left:life, bar:node.querySelector('.fuse i')};
-  node.addEventListener('pointerdown', e => grab(e, card));
-  G.cards.push(card);
+  node.className = 'brief'; node.tabIndex = 0;
+  node.innerHTML = `<div class="src">${FROM[(Math.random()*FROM.length)|0]}</div>
+                    <div class="txt">${brief}</div>`;
+  const item = {node, caption, tag};
+  node.addEventListener('pointerdown', e => grab(e, item));
+  node.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); hand(item); }
+  });
+  inList.appendChild(node);
+  waiting.push(item);
+  tally();
 }
 
-function drop(card){
-  card.node.remove();
-  G.cards = G.cards.filter(c => c !== card);
-  if (picked === card) picked = null;
+function tally(){
+  el('in-n').textContent = waiting.length;
+  el('in-head').classList.toggle('busy', waiting.length >= MAX_IN);
+  el('s-done').textContent = shipped;
+  el('s-hours').textContent = (shipped * 25 / 60).toFixed(1) + 'h';
+  el('busy').classList.toggle('on', working > 0);
+  el('busy').textContent = working > 1 ? `working on ${working}…` : 'working…';
 }
 
-function pile(card){
-  drop(card);
-  G.desk = Math.min(DESK_MAX, G.desk + 1);
-  paintDesk();
-  flash('Landed on your desk', 'var(--bad)');
-  G.combo = 1;
-  if (G.desk >= DESK_MAX) finish(true);
+function hand(item){
+  if (!waiting.includes(item)) return;
+  waiting = waiting.filter(w => w !== item);
+  item.node.classList.add('leaving');
+  setTimeout(() => item.node.remove(), 340);
+  working++; bounce(); tally();
+  setTimeout(() => { working--; ship(item); tally(); }, WORK_MS);
 }
 
-function paintDesk(){
-  [...slots.children].forEach((s,i) => s.classList.toggle('on', i < G.desk));
-  el('t-clock').parentElement.classList.toggle('warn', G.desk >= DESK_MAX-1);
+function ship(item){
+  shipped++;
+  const d = document.createElement('div');
+  d.className = 'done';
+  d.innerHTML = `<div class="cap">${item.caption}</div>
+                 <div class="tag"><i></i>${item.tag}</div>`;
+  outList.prepend(d);
+  while (outList.children.length > 4) outList.lastElementChild.remove();
 }
 
-function assign(card, whoId){
-  const chip = dock.querySelector(`[data-who="${whoId}"]`);
-  if (card.who === whoId){
-    G.done++; G.combo = Math.min(5, G.combo + 1); G.best = Math.max(G.best, G.combo);
-    chip.classList.remove('good'); void chip.offsetWidth; chip.classList.add('good');
-    flash(G.combo > 2 ? `Delegated ×${G.combo}` : 'Delegated', 'var(--ok)');
-    cheer(true);
-    drop(card);
-  } else {
-    G.combo = 1;
-    card.left = Math.max(0.6, card.left - 2.2);
-    chip.classList.remove('nope'); void chip.offsetWidth; chip.classList.add('nope');
-    flash('Not their job', 'var(--bad)');
-    cheer(false);
-  }
-  el('t-done').textContent = G.done;
-  el('t-combo').textContent = '×' + G.combo;
-}
-
-function flash(msg, colour){
-  const f = el('flash');
-  f.textContent = msg; f.style.color = colour;
-  f.classList.remove('show'); void f.offsetWidth; f.classList.add('show');
-}
-
-/* ---- pointer: drag a card onto a name, or tap card then tap name ---- */
-let picked = null, ghost = null, moved = false, from = null;
-
-function grab(e, card){
-  if (!G.live) return;
+/* drag, or simply click */
+function grab(e, item){
   e.preventDefault();
-  from = card; moved = false;
-  const r = card.node.getBoundingClientRect();
+  const r = item.node.getBoundingClientRect();
   const dx = e.clientX - r.left, dy = e.clientY - r.top;
+  let ghost = null, moved = false;
+  dropZone.classList.add('armed');
+
   const move = ev => {
     if (!moved && Math.hypot(ev.clientX-e.clientX, ev.clientY-e.clientY) < 6) return;
     if (!moved){
       moved = true;
-      ghost = card.node.cloneNode(true);
+      ghost = item.node.cloneNode(true);
       ghost.classList.add('drag');
       document.body.appendChild(ghost);
-      card.node.style.opacity = .35;
+      item.node.style.opacity = .3;
     }
     ghost.style.left = (ev.clientX - dx) + 'px';
     ghost.style.top  = (ev.clientY - dy) + 'px';
-    const over = chipAt(ev.clientX, ev.clientY);
-    dock.querySelectorAll('.who').forEach(c => c.classList.toggle('over', c === over));
+    dropZone.classList.toggle('hit', overDrop(ev.clientX, ev.clientY));
   };
   const up = ev => {
     removeEventListener('pointermove', move);
     removeEventListener('pointerup', up);
-    dock.querySelectorAll('.who').forEach(c => c.classList.remove('over'));
-    if (ghost){ ghost.remove(); ghost = null; }
-    card.node.style.opacity = '';
-    if (!G.cards.includes(card)) return;
-    if (moved){
-      const chip = chipAt(ev.clientX, ev.clientY);
-      if (chip) assign(card, chip.dataset.who);
-    } else {
-      if (picked) picked.node.classList.remove('picked');
-      picked = picked === card ? null : card;
-      if (picked) picked.node.classList.add('picked');
-    }
+    dropZone.classList.remove('armed','hit');
+    if (ghost) ghost.remove();
+    item.node.style.opacity = '';
+    if (!moved || overDrop(ev.clientX, ev.clientY)) hand(item);   // a click counts too
   };
   addEventListener('pointermove', move);
   addEventListener('pointerup', up);
 }
 
-function chipAt(x, y){
-  const hit = document.elementFromPoint(x, y);
-  return hit ? hit.closest('.who') : null;
+function overDrop(x, y){
+  const r = dropZone.getBoundingClientRect();
+  const nx = (x - (r.left + r.width/2)) / (r.width/2);
+  const ny = (y - (r.top + r.height/2)) / (r.height/2);
+  return nx*nx + ny*ny <= 1.25;      // a forgiving ellipse around her
 }
 
-dock.addEventListener('click', e => {
-  const chip = e.target.closest('.who');
-  if (!chip || !G.live || !picked) return;
-  const card = picked;
-  picked.node.classList.remove('picked'); picked = null;
-  assign(card, chip.dataset.who);
-});
-
-/* ---- loop ---- */
-function start(){
-  reset();
-  queue.innerHTML = '';
-  paintDesk();
-  el('t-done').textContent = '0'; el('t-combo').textContent = '×1';
-  el('start').hidden = true; el('over').hidden = true;
-  G.live = true;
-  spawn();
-}
-
-function finish(drowned){
-  G.live = false;
-  G.cards.forEach(c => c.node.remove()); G.cards = []; picked = null;
-  el('o-title').textContent = drowned ? 'Your desk filled up.' : 'Shift over.';
-  el('o-line').textContent = drowned
-    ? 'Five jobs waited for you instead of going to someone who owns them. That is the whole problem in one screen.'
-    : `You cleared the shift without doing any of the work yourself — every job went to the specialist whose job it was.`;
-  el('o-done').textContent  = G.done;
-  el('o-best').textContent  = '×' + G.best;
-  el('o-hours').textContent = (G.done * 20 / 60).toFixed(1) + 'h';
-  el('over').hidden = false;
-}
-
-el('btn-start').onclick = start;
-el('btn-again').onclick = start;
+addBrief();
 
 let last = performance.now();
 renderer.setAnimationLoop(now => {
   const dt = Math.min(0.05, (now - last)/1000); last = now;
 
-  if (G.live){
-    G.t -= dt;
-    el('t-clock').textContent = '0:' + String(Math.max(0, Math.ceil(G.t))).padStart(2,'0');
-    G.next -= dt;
-    if (G.next <= 0){
-      spawn();
-      G.next = 2.6 - 1.5*(1 - G.t/ROUND) + Math.random()*0.5;   // work arrives faster later
-    }
-    for (const c of [...G.cards]){
-      c.left -= dt;
-      c.bar.style.width = Math.max(0, c.left/c.life*100) + '%';
-      c.node.classList.toggle('hot', c.left < 3);
-      if (c.left <= 0) pile(c);
-    }
-    if (G.t <= 0) finish(false);
-  }
+  nextIn -= dt;
+  if (nextIn <= 0){ addBrief(); nextIn = 3.1 + Math.random()*1.4; }
 
-  // idle sway, plus a hop or a shake when a job is handed over
   const t = now/1000;
-  rig.rotation.y = Math.sin(t*0.45)*0.16;
-  rig.position.y = Math.sin(t*1.15)*0.0016;
-  if (react){
-    react.t += dt;
-    const k = Math.max(0, 1 - react.t/0.45);
-    if (react.ok) rig.position.y += Math.sin(react.t*18)*0.006*k;
-    else          rig.rotation.y  += Math.sin(react.t*30)*0.13*k;
-    if (react.t > 0.45) react = null;
+  rig.rotation.y = Math.sin(t*0.42)*0.17;
+  rig.position.y = Math.sin(t*1.1)*0.0016;
+  if (hop !== null){
+    hop += dt;
+    const k = Math.max(0, 1 - hop/0.5);
+    rig.position.y += Math.abs(Math.sin(hop*13))*0.007*k;
+    if (hop > 0.5) hop = null;
   }
   renderer.render(scene, camera);
 });
-
-addEventListener('resize', () => {
-  camera.aspect = innerWidth/innerHeight;
-  renderer.setSize(innerWidth, innerHeight);
-  place();
-});
+addEventListener('resize', frame);
 </script>

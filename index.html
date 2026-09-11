@@ -3,108 +3,151 @@
 <title>Soshie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;700&family=Hanken+Grotesk:wght@400;500&family=DM+Mono:wght@400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:ital,opsz,wght@1,9..144,400&display=swap">
 <style>
   :root{
-    --ground:#FBF7FD; --ground-2:#EFE7F6;
-    --ink:#2B2136; --muted:#7B6E8C;
-    --line:rgba(43,33,54,.13); --panel:rgba(255,255,255,.66);
-    --accent:#8B63D6; --swatch-ring:rgba(43,33,54,.16);
-    --display:"Gabarito",ui-sans-serif,system-ui,sans-serif;
-    --body:"Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;
-    --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --outer:#EFEDEE; --edge:rgba(0,0,0,.06);
+    --ink:#FBF4F8; --dim:rgba(251,244,248,.60); --faint:rgba(251,244,248,.30);
+    --hair:rgba(251,244,248,.16);
+    --pink:#F79BCE; --lav:#A87DEC; --peri:#A7BCF5;
+    --disp:"Martian Mono",ui-monospace,monospace;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --ital:"Fraunces",Georgia,serif;
   }
-  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-    --ground:#171223; --ground-2:#0D0A15;
-    --ink:#F0E9F7; --muted:#A093B4;
-    --line:rgba(255,255,255,.15); --panel:rgba(255,255,255,.07);
-    --accent:#C4A9F2; --swatch-ring:rgba(255,255,255,.22);
-  }}
-  :root[data-theme="dark"]{
-    --ground:#171223; --ground-2:#0D0A15;
-    --ink:#F0E9F7; --muted:#A093B4;
-    --line:rgba(255,255,255,.15); --panel:rgba(255,255,255,.07);
-    --accent:#C4A9F2; --swatch-ring:rgba(255,255,255,.22);
-  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--outer:#0B0609;--edge:rgba(255,255,255,.07)}}
+  :root[data-theme="dark"]{--outer:#0B0609;--edge:rgba(255,255,255,.07)}
   *{box-sizing:border-box}
-  body{
-    margin:0;height:100dvh;overflow:hidden;color:var(--ink);font-family:var(--body);
-    background:radial-gradient(125% 95% at 50% -10%,var(--ground) 0%,var(--ground-2) 100%);
-  }
-  #stage{position:fixed;inset:0}
-  canvas{display:block;touch-action:none}
+  html,body{height:100%}
+  body{margin:0;background:var(--outer);color:var(--ink);font-family:var(--mono);overflow:hidden}
 
-  header{position:fixed;top:0;left:0;padding:24px 26px;z-index:2;pointer-events:none;
-    display:flex;flex-direction:column;gap:7px}
-  h1{margin:0;font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.015em}
-  .spec{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted);
-    font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-  .hint{margin:0;font-size:12.5px;color:var(--muted)}
+  /* the whole page is one dark card, inset from the window */
+  #card{position:fixed;inset:13px;border-radius:26px;overflow:hidden;border:1px solid var(--edge);
+    background:radial-gradient(125% 95% at 62% -12%,#5A1749 0%,#2E0B26 46%,#130511 100%)}
+  #stage{position:absolute;inset:0}
+  /* scrim so the headline always has a dark field under it, as on the reference */
+  #card::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:linear-gradient(100deg,rgba(19,5,17,.80) 0%,rgba(19,5,17,.52) 26%,
+      rgba(19,5,17,0) 56%)}
+  canvas{display:block}
 
-  #palette{position:fixed;left:26px;bottom:22px;z-index:2;display:flex;flex-direction:column;gap:8px}
-  #palette .cap{font-family:var(--mono);font-size:10px;letter-spacing:.09em;
-    text-transform:uppercase;color:var(--muted)}
-  #palette ul{margin:0;padding:0;list-style:none;display:flex;gap:6px}
-  #palette li{width:19px;height:19px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--swatch-ring)}
+  .row{position:absolute;z-index:3;display:flex;align-items:center;gap:8px}
+  #nav{top:20px;left:22px}
+  #nav ul{margin:0;padding:6px 8px;list-style:none;display:flex;gap:2px;align-items:center;
+    background:rgba(10,4,9,.55);border:1px solid var(--hair);border-radius:999px;
+    backdrop-filter:blur(14px)}
+  #nav .mark{width:22px;height:22px;border-radius:50%;margin:0 4px 0 2px}
+  #nav a{color:var(--dim);text-decoration:none;font-size:11px;padding:5px 10px;border-radius:999px;
+    transition:color .15s,background .15s}
+  #nav a:hover,#nav a[aria-current]{color:var(--ink);background:rgba(255,255,255,.09)}
+  #top-r{top:20px;right:22px}
+  .pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink);background:rgba(10,4,9,.55);border:1px solid var(--hair);border-radius:999px;
+    padding:9px 16px;text-decoration:none;cursor:pointer;transition:.15s;backdrop-filter:blur(14px)}
+  .pill:hover{background:rgba(255,255,255,.12)}
+  .pill.solid{background:var(--ink);color:#190717;border-color:transparent;font-weight:700}
+  .pill.solid:hover{background:#fff}
 
-  #bar{position:fixed;left:0;right:0;bottom:0;padding:20px;z-index:2;
-    display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
-  button{
-    font-family:var(--body);font-size:12.5px;font-weight:500;color:var(--ink);
-    background:var(--panel);border:1px solid var(--line);border-radius:999px;
-    padding:8px 16px;cursor:pointer;transition:border-color .15s,color .15s;
-    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  }
-  button:hover{border-color:var(--accent)}
-  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+  #lede{position:absolute;z-index:3;left:34px;top:96px;max-width:min(52vw,620px)}
+  .eyebrow{display:flex;align-items:center;gap:9px;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--faint);margin-bottom:14px}
+  .eyebrow em{font-family:var(--ital);font-size:14px;letter-spacing:0;text-transform:none;
+    color:var(--dim)}
+  h1{margin:0;font-family:var(--disp);font-weight:600;letter-spacing:-.045em;line-height:1.08;
+    font-size:clamp(26px,3.9vw,54px);text-wrap:balance}
 
-  #load{position:fixed;inset:0;z-index:3;display:grid;place-content:center;justify-items:center;
-    gap:14px;background:radial-gradient(125% 95% at 50% -10%,var(--ground) 0%,var(--ground-2) 100%);
-    transition:opacity .55s}
+  #foot{position:absolute;z-index:3;left:34px;bottom:34px;max-width:390px;display:flex;
+    flex-direction:column;gap:18px;align-items:flex-start}
+  #foot p{margin:0;font-size:11.5px;line-height:1.72;color:var(--dim)}
+  .cta{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.11em;
+    text-transform:uppercase;color:#190717;background:var(--ink);border:0;border-radius:999px;
+    padding:15px 26px;text-decoration:none;cursor:pointer;transition:transform .15s,background .15s}
+  .cta:hover{transform:translateY(-2px);background:#fff}
+
+  #rail{position:absolute;z-index:3;right:34px;top:50%;transform:translateY(-50%);
+    display:flex;flex-direction:column;gap:34px;text-align:right}
+  #rail b{display:block;font-family:var(--disp);font-weight:700;font-size:clamp(20px,2.4vw,31px);
+    letter-spacing:-.05em;line-height:1}
+  #rail span{font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
+
+  #views{position:absolute;z-index:3;left:50%;bottom:26px;transform:translateX(-50%);
+    display:flex;gap:5px}
+  #views button{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--dim);background:rgba(10,4,9,.5);border:1px solid var(--hair);border-radius:999px;
+    padding:8px 13px;cursor:pointer;backdrop-filter:blur(14px);transition:.15s}
+  #views button:hover{color:var(--ink);border-color:rgba(255,255,255,.34)}
+  #views button[aria-pressed="true"]{color:#190717;background:var(--ink);border-color:transparent}
+  button:focus-visible,a:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
+
+  #src{position:absolute;z-index:3;left:34px;bottom:12px;font-size:9px;letter-spacing:.08em;
+    text-transform:uppercase;color:rgba(251,244,248,.2)}
+
+  #load{position:absolute;inset:0;z-index:5;display:grid;place-content:center;gap:12px;
+    justify-items:center;background:radial-gradient(125% 95% at 62% -12%,#5A1749,#130511);
+    transition:opacity .6s}
   #load.gone{opacity:0;pointer-events:none}
-  #track{width:150px;height:2px;border-radius:2px;background:var(--line);overflow:hidden}
-  #fill{height:100%;width:6%;background:var(--accent);transition:width .25s}
-  #pct{font-family:var(--mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  #load .bar{width:140px;height:2px;background:var(--hair);overflow:hidden;border-radius:2px}
+  #load .bar i{display:block;height:100%;width:4%;background:var(--pink);transition:width .25s}
+  #load span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
 
-  @media (max-width:640px){
-    #palette{display:none}
-    header{padding:18px 20px}
+  @media (max-width:900px){
+    #card{inset:8px;border-radius:20px}
+    #lede{left:20px;top:82px;max-width:calc(100% - 40px)}
+    #rail{top:auto;bottom:150px;right:20px;transform:none;gap:18px}
+    #foot{left:20px;bottom:74px;max-width:calc(100% - 40px)}
+    #foot p{font-size:10.5px}
+    #src{display:none}
+    #views{bottom:18px}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
-<div id="stage"></div>
+<div id="card">
+  <div id="stage"></div>
 
-<header>
-  <h1>Soshie</h1>
-  <p class="spec">140 mm tall &middot; 8 printed parts &middot; 210k triangles</p>
-  <p class="hint">Drag to rotate &middot; scroll to zoom</p>
-</header>
+  <nav id="nav" class="row">
+    <ul>
+      <li><canvas class="mark" id="mark" width="64" height="64"></canvas></li>
+      <li><a href="./" aria-current="page">Model</a></li>
+      <li><a href="delegate/">Game</a></li>
+      <li><a href="https://github.com/unrootdesign/sintra">Source</a></li>
+    </ul>
+  </nav>
 
-<div id="palette">
-  <div class="cap">Palette</div>
-  <ul>
-    <li style="background:#F2A8CE" title="#F2A8CE suit &amp; helmet"></li>
-    <li style="background:#A98BE0" title="#A98BE0 gloves, trim, ears"></li>
-    <li style="background:#B3C4EE" title="#B3C4EE studs"></li>
-    <li style="background:#A9C6DF" title="#A9C6DF hair &amp; brows"></li>
-    <li style="background:#F5CE72" title="#F5CE72 boots"></li>
-    <li style="background:#5E4499" title="#5E4499 soles"></li>
-  </ul>
-</div>
+  <div id="top-r" class="row">
+    <a class="pill" href="soshie.glb" download>Download GLB</a>
+    <a class="pill solid" href="delegate/">Play</a>
+  </div>
 
-<div id="bar">
-  <button id="spin" aria-pressed="true">Auto-rotate</button>
-  <button id="v-front">Front</button>
-  <button id="v-three">3/4</button>
-  <button id="v-side">Side</button>
-  <button id="v-back">Back</button>
-</div>
+  <div id="lede">
+    <div class="eyebrow">Eight parts, <em>one figure</em></div>
+    <h1>Assembled and painted from the raw print files</h1>
+  </div>
 
-<div id="load">
-  <div id="track"><div id="fill"></div></div>
-  <span id="pct">Loading</span>
+  <div id="rail">
+    <div><b>8</b><span>Printed parts</span></div>
+    <div><b>140</b><span>Millimetres tall</span></div>
+    <div><b>210k</b><span>Triangles</span></div>
+  </div>
+
+  <div id="foot">
+    <p>The parts export in shared world coordinates, so they assemble with no
+       transform at all. Every colour region is already its own mesh island —
+       studs, soles, each hair strand — so the paint is scripted per island
+       rather than brushed on by hand.</p>
+    <a class="cta" href="delegate/">Give her some work →</a>
+  </div>
+
+  <div id="views">
+    <button id="v-front">Front</button>
+    <button id="v-three" aria-pressed="true">3/4</button>
+    <button id="v-side">Side</button>
+    <button id="v-back">Back</button>
+    <button id="spin" aria-pressed="true">Auto</button>
+  </div>
+
+  <div id="src">Drag to rotate · scroll to zoom</div>
+
+  <div id="load"><div class="bar"><i id="fill"></i></div><span id="pct">Loading</span></div>
 </div>
 
 <script type="importmap">
@@ -119,57 +162,44 @@ import {OrbitControls}   from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader}      from 'three/addons/loaders/GLTFLoader.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 
-const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
+/* ---- the printed chest mark, drawn as geometry ---- */
+export function drawMark(x, S){
+  x.clearRect(0,0,S,S);
+  const s = S/512;
+  x.fillStyle = '#ffffff';
+  x.beginPath(); x.arc(256*s,256*s,232*s,0,Math.PI*2); x.fill();
+  const L = 56*s, T = 140*s, k = (400/300)*s;
+  const R = (X,Y,W,H) => { x.beginPath(); x.roundRect(L+X*k, T+Y*k, W*k, H*k, 7*s); x.fill(); };
+  x.fillStyle = '#141414';
+  R(0,   0, 100,  50);            // i — the square tittle
+  R(0,  68, 100, 107);            // i — stem
+  R(145, 0, 155, 175);            // n — solid block
+  x.fillStyle = '#ffffff';        // n — counter punched back out
+  x.beginPath();
+  x.roundRect(L+200*k, T+58*k, 44*k, 140*k, [20*s,20*s,0,0]); x.fill();
+}
+{ const c = document.getElementById('mark');
+  const g = c.getContext('2d'); drawMark(g, 64); }
 
+const stage = document.getElementById('stage');
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.NoToneMapping;
-renderer.toneMappingExposure = 1.0;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-document.getElementById('stage').appendChild(renderer.domElement);
+stage.appendChild(renderer.domElement);
 
 const scene  = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(32, innerWidth/innerHeight, 0.01, 20);
-
-const pmrem = new THREE.PMREMGenerator(renderer);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 20);
+const pmrem  = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.05).texture;
-scene.environmentIntensity = 0.62;
+scene.environmentIntensity = 0.5;
 
-const key = new THREE.DirectionalLight(0xffffff, 1.75);
-key.position.set(0.35, 0.42, 0.30);
-key.castShadow = true;
-key.shadow.mapSize.set(2048, 2048);
-const cam = key.shadow.camera, d = 0.13;
-cam.left = -d; cam.right = d; cam.top = d; cam.bottom = -d; cam.near = 0.05; cam.far = 1.2;
-key.shadow.bias = -0.0009; key.shadow.radius = 4;
-scene.add(key);
-
-const fillLight = new THREE.DirectionalLight(0xdfe6ff, 0.42);
-fillLight.position.set(-0.40, 0.20, -0.35);
-scene.add(fillLight);
-scene.add(new THREE.HemisphereLight(0xffffff, 0xEDE6F7, 0.72));
-
-/* soft contact shadow so the figure sits on the ground instead of floating */
-const sc = document.createElement('canvas'); sc.width = sc.height = 256;
-const g2 = sc.getContext('2d');
-const rg = g2.createRadialGradient(128,128,0,128,128,128);
-rg.addColorStop(0,'rgba(58,38,88,.32)');
-rg.addColorStop(.45,'rgba(58,38,88,.15)');
-rg.addColorStop(1,'rgba(58,38,88,0)');
-g2.fillStyle = rg; g2.fillRect(0,0,256,256);
-const blobTex = new THREE.CanvasTexture(sc);
-const blob = new THREE.Mesh(
-  new THREE.PlaneGeometry(0.132, 0.132).rotateX(-Math.PI/2),
-  new THREE.MeshBasicMaterial({map:blobTex, transparent:true, depthWrite:false}));
-blob.position.y = 0.0005;
-scene.add(blob);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.dampingFactor = 0.075;
-controls.minDistance = 0.11; controls.maxDistance = 0.9;
-controls.autoRotate = !reduced; controls.autoRotateSpeed = 0.9;
+const key = new THREE.DirectionalLight(0xffffff, 2.3);
+key.position.set(0.34, 0.40, 0.32); scene.add(key);
+const warm = new THREE.DirectionalLight(0xFFC9E6, 0.75);
+warm.position.set(-0.42, 0.14, 0.18); scene.add(warm);
+const cool = new THREE.DirectionalLight(0x9DB4FF, 0.55);
+cool.position.set(0.10, -0.22, -0.40); scene.add(cool);
+scene.add(new THREE.HemisphereLight(0xF6E4FF, 0x2A0A22, 0.85));
 
 const PIVOT = new THREE.Vector3(0, 0.070, 0);
 const VIEWS = {
@@ -178,65 +208,57 @@ const VIEWS = {
   side:  new THREE.Vector3( 0.00, 0.13, -1.00).normalize(),
   back:  new THREE.Vector3(-1.00, 0.13,  0.00).normalize(),
 };
-/* distance that keeps the whole 140 mm figure framed at any aspect ratio */
-function fitDistance(){
-  const v = camera.fov * Math.PI/180;
-  const h = 2*Math.atan(Math.tan(v/2)*camera.aspect);
-  return Math.max((0.158/2)/Math.tan(v/2), (0.105/2)/Math.tan(h/2));
-}
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.075;
+controls.minDistance = 0.11; controls.maxDistance = 0.9;
+controls.autoRotate = true; controls.autoRotateSpeed = 0.8;
+
 let view = 'three';
-function goTo(v){
-  view = v;
-  camera.position.copy(PIVOT).addScaledVector(VIEWS[v], fitDistance());
-  controls.target.copy(PIVOT);
+function frame(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w/h;
+  const v = camera.fov*Math.PI/180;
+  const hf = 2*Math.atan(Math.tan(v/2)*camera.aspect);
+  const wide = w >= 900;
+  const dist = Math.max(((wide?0.235:0.300)/2)/Math.tan(v/2), (0.105/2)/Math.tan(hf/2));
+  camera.position.copy(PIVOT).addScaledVector(VIEWS[view], dist);
+  camera.lookAt(PIVOT);
+  // keep the figure clear of the headline on wide screens
+  if (wide){
+    const visW = 2*dist*Math.tan(hf/2);
+    const right = new THREE.Vector3().crossVectors(VIEWS[view], new THREE.Vector3(0,1,0)).normalize();
+    const pan = right.multiplyScalar(visW*0.155);
+    camera.position.add(pan); controls.target.copy(PIVOT).add(pan);
+  } else {
+    controls.target.copy(PIVOT);
+  }
+  camera.updateProjectionMatrix();
   controls.update();
 }
-goTo('three');
+frame();
 
-/* the chest disc is blank geometry — the printed mark is drawn here as shapes */
 function badge(){
-  const S = 512, INK = '#141414';
-  const c = document.createElement('canvas'); c.width = c.height = S;
-  const x = c.getContext('2d');
-  x.fillStyle = '#ffffff';
-  x.beginPath(); x.arc(S/2, S/2, S/2, 0, Math.PI*2); x.fill();
-
-  // squared geometric "in" under a full-width rule, matching the printed mark
-  x.fillStyle = INK;
-  const r = (X,Y,W,H) => { x.beginPath(); x.roundRect(X,Y,W,H,4); x.fill(); };
-  r(138, 169, 236,  42);   // the rule across the top
-  r(138, 237,  46, 106);   // i
-  r(204, 237,  46, 106);   // n, left stem
-  r(204, 237, 170,  46);   // n, shoulder
-  r(328, 237,  46, 106);   // n, right stem
-
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  drawMark(c.getContext('2d'), 512);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  const m = new THREE.Mesh(
-    new THREE.CircleGeometry(0.0052, 64),
-    new THREE.MeshStandardMaterial({map:t, roughness:0.34, metalness:0}));
-  m.rotation.y = Math.PI/2;             // glTF is Y-up: Blender (x,y,z) maps to (x,z,-y)
+  const m = new THREE.Mesh(new THREE.CircleGeometry(0.0059, 64),
+        new THREE.MeshStandardMaterial({map:t, roughness:0.34, metalness:0, transparent:true}));
+  m.rotation.y = Math.PI/2;            // glTF is Y-up: Blender (x,y,z) maps to (x,z,-y)
   m.position.set(0.01088, 0.0541, 0);
   return m;
 }
 
-const loadEl = document.getElementById('load');
-const fillEl = document.getElementById('fill');
-const pctEl  = document.getElementById('pct');
-
+const loadEl = document.getElementById('load'), fillEl = document.getElementById('fill');
 function onLoad(gltf){
   gltf.scene.traverse(o => {
     if (!o.isMesh) return;
-    o.castShadow = true; o.receiveShadow = true;
     const list = Array.isArray(o.material) ? o.material : [o.material];
     const out = list.map(m => {
-      const n = m.name || '';
-      m.metalness = 0;
-      m.roughness = n.includes('eye') ? 0.09 : 0.42;
-      m.vertexColors = true;
-      m.color.setRGB(1,1,1);
-      return m;
+      m.metalness = 0; m.roughness = (m.name||'').includes('eye') ? 0.09 : 0.42;
+      m.vertexColors = true; m.color.setRGB(1,1,1); return m;
     });
     o.material = out.length === 1 ? out[0] : out;
   });
@@ -244,7 +266,6 @@ function onLoad(gltf){
   scene.add(gltf.scene);
   loadEl.classList.add('gone');
 }
-
 const loader = new GLTFLoader();
 if (window.SOSHIE_GLB){
   const bin = atob(window.SOSHIE_GLB), buf = new Uint8Array(bin.length);
@@ -255,29 +276,27 @@ if (window.SOSHIE_GLB){
 } else {
   loader.load('soshie.glb', onLoad, e => {
     if (!e.lengthComputable) return;
-    const p = Math.round(e.loaded / e.total * 100);
-    fillEl.style.width = p + '%'; pctEl.textContent = p + '%';
+    const p = Math.round(e.loaded/e.total*100);
+    fillEl.style.width = p + '%';
+    document.getElementById('pct').textContent = p + '%';
   });
 }
 
 const spin = document.getElementById('spin');
-spin.setAttribute('aria-pressed', String(controls.autoRotate));
 spin.onclick = () => {
   controls.autoRotate = !controls.autoRotate;
   spin.setAttribute('aria-pressed', String(controls.autoRotate));
 };
-for (const v of ['front','three','side','back'])
-  document.getElementById('v-'+v).onclick = () => goTo(v);
+for (const v of ['front','three','side','back']){
+  document.getElementById('v-'+v).onclick = () => {
+    view = v; frame();
+    document.querySelectorAll('#views button[id^=v-]').forEach(b =>
+      b.setAttribute('aria-pressed', String(b.id === 'v-'+v)));
+  };
+}
 renderer.domElement.addEventListener('pointerdown', () => {
-  controls.autoRotate = false;
-  spin.setAttribute('aria-pressed','false');
+  controls.autoRotate = false; spin.setAttribute('aria-pressed','false');
 });
-
-addEventListener('resize', () => {
-  camera.aspect = innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-  goTo(view);
-});
+addEventListener('resize', frame);
 renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
 </script>

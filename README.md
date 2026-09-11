@@ -5,9 +5,9 @@ print set, assembled, coloured, and served as a single glTF binary.
 
 - `index.html` — the viewer (three.js from jsDelivr, no build step)
 - `soshie.glb` — the model, 210k triangles, colour baked into vertex colours
-- `delegate/` — *Delegation Drill*, a one-screen game: route incoming work to
-  the specialist who owns it before five jobs pile up on your desk. Uses a
-  lighter 91k-triangle build of the same model.
+- `delegate/` — *Hand It To Soshie*: briefs land on you, you hand each one to
+  her, and what comes back is the finished post. No start screen, no menus —
+  the page opens already playing. Uses a lighter 91k-triangle build.
 
 ## Where the model comes from
 
