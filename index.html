@@ -201,15 +201,14 @@ function badge(){
   x.fillStyle = '#ffffff';
   x.beginPath(); x.arc(S/2, S/2, S/2, 0, Math.PI*2); x.fill();
 
-  x.fillStyle = INK; x.strokeStyle = INK;
-  const bar = (X,Y,W,H) => { x.beginPath(); x.roundRect(X,Y,W,H,6); x.fill(); };
-  const W = 52;                        // stroke weight
-  bar(138, 140, 236, 48);              // the rule across the top
-  bar(138, 220, W, 152);               // i
-  bar(214, 220, W, 152);               // n, left stem
-  bar(322, 300, W, 72);                // n, right stem
-  x.lineWidth = W; x.lineCap = 'butt';
-  x.beginPath(); x.arc(294, 300, 54, Math.PI, Math.PI*2); x.stroke();  // n, shoulder
+  // squared geometric "in" under a full-width rule, matching the printed mark
+  x.fillStyle = INK;
+  const r = (X,Y,W,H) => { x.beginPath(); x.roundRect(X,Y,W,H,4); x.fill(); };
+  r(138, 169, 236,  42);   // the rule across the top
+  r(138, 237,  46, 106);   // i
+  r(204, 237,  46, 106);   // n, left stem
+  r(204, 237, 170,  46);   // n, shoulder
+  r(328, 237,  46, 106);   // n, right stem
 
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
