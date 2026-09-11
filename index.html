@@ -10,7 +10,7 @@
     /* driven from JS as the day turns */
     --ink:#FFFFFF; --panel:rgba(6,12,26,.56); --hair:rgba(255,255,255,.19);
     --faint:rgba(255,255,255,.58); --scrimRGB:20,82,143;
-    --tick:#4FE0A8;
+    --tick:#4FE0A8; --warm:#F9CAC8;
     --c-rim:.10; --c-dot:.13; --c-pip:.12; --c-q:.18; --c-hh:.26; --c-mm:.18;
     --disp:"Martian Mono",ui-monospace,monospace;
     --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
@@ -26,22 +26,22 @@
   #card{position:fixed;inset:13px;border-radius:26px;overflow:hidden;
     background:#2A4A6E;cursor:crosshair}
   #sky{position:absolute;inset:0;z-index:0}
-  #card::before{content:"";position:absolute;left:0;right:0;top:0;height:150px;z-index:3;
+  #card::before{content:"";position:absolute;left:0;right:0;bottom:0;height:170px;z-index:3;
     pointer-events:none;
-    background:linear-gradient(180deg,rgba(5,10,20,.40) 0%,rgba(5,10,20,0) 100%)}
+    background:linear-gradient(0deg,rgba(5,10,20,.42) 0%,rgba(5,10,20,0) 100%)}
 
   /* the clock lives behind her, like something on the wall */
   #wall{position:absolute;z-index:1;left:var(--focal);top:48%;transform:translate(-50%,-50%);
     width:min(86vh,680px);aspect-ratio:1;pointer-events:none;
-    filter:drop-shadow(0 0 4px rgba(255,255,255,.30))
-           drop-shadow(0 0 26px rgba(255,255,255,.24))}
-  #wall .rim{fill:none;stroke:#fff;stroke-opacity:var(--c-rim);stroke-width:.13}
-  #wall .pip{stroke:#fff;stroke-opacity:var(--c-pip);stroke-width:.14;stroke-linecap:round}
+    filter:drop-shadow(0 0 4px rgba(249,202,200,.34))
+           drop-shadow(0 0 26px rgba(249,202,200,.26))}
+  #wall .rim{fill:none;stroke:var(--warm);stroke-opacity:var(--c-rim);stroke-width:.13}
+  #wall .pip{stroke:var(--warm);stroke-opacity:var(--c-pip);stroke-width:.14;stroke-linecap:round}
   #wall .pip.q{stroke-opacity:var(--c-q);stroke-width:.30}
   #wall .dot{stroke-opacity:var(--c-dot);stroke-dasharray:.14 1.5;stroke-linecap:round}
-  #wall .hh{stroke:#fff;stroke-opacity:var(--c-hh);stroke-width:.42;stroke-linecap:round}
-  #wall .mm{stroke:#fff;stroke-opacity:var(--c-mm);stroke-width:.26;stroke-linecap:round}
-  #wall .pin{fill:#fff;fill-opacity:var(--c-hh)}
+  #wall .hh{stroke:var(--warm);stroke-opacity:var(--c-hh);stroke-width:.42;stroke-linecap:round}
+  #wall .mm{stroke:var(--warm);stroke-opacity:var(--c-mm);stroke-width:.26;stroke-linecap:round}
+  #wall .pin{fill:var(--warm);fill-opacity:var(--c-hh)}
 
   #stage{position:absolute;inset:0;z-index:2}
   /* one full-width veil in the current sky colour; the stops approximate an ease
@@ -62,7 +62,8 @@
   #total{position:absolute;z-index:4;top:24px;right:26px;text-align:right}
   /* both running figures are set identically, so neither reads as the bigger one */
   .fig{font-family:var(--disp);font-weight:700;font-size:clamp(21px,2.6vw,31px);
-    letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+    letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums;
+    color:var(--warm);text-shadow:0 1px 14px rgba(6,16,34,.55),0 0 3px rgba(6,16,34,.35)}
   .sub{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
     margin-top:5px}
 
