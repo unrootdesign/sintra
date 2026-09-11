@@ -80,8 +80,8 @@
     animation:pop .38s cubic-bezier(.2,.9,.3,1.15)}
   /* the job fills its own card while it runs, then the green drains away */
   .done .fill{position:absolute;left:0;top:0;bottom:0;width:0;
-    background:linear-gradient(90deg,rgba(45,198,140,.10),rgba(45,198,140,.22));
-    box-shadow:1px 0 0 rgba(45,198,140,.55);transition:opacity .55s .12s}
+    background:linear-gradient(90deg,rgba(28,214,140,.20),rgba(28,214,140,.44));
+    box-shadow:1.5px 0 0 rgba(24,206,132,.85);transition:opacity .55s .12s}
   .done:not(.working) .fill{opacity:0}
   .done .cap,.done .tag{position:relative}
   .done .cap{font-size:11.5px;line-height:1.38}
@@ -165,7 +165,7 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {drawMark}        from './mark.js';
 
 const el = id => document.getElementById(id);
-const DAY_MS = 60000;                       // a whole day per real minute
+const DAY_MS = 24000;                       // a whole day every 24 seconds
 
 /* ---- clock face ---- */
 { const g = el('pips');
@@ -431,7 +431,7 @@ function landTask(now){
   total++;
   el('t-total').textContent = total;
   task = null;
-  nextAt = now + 170 + Math.random()*260;
+  nextAt = now + 60 + Math.random()*110;
 }
 
 /* ---- run ---- */
@@ -467,7 +467,7 @@ renderer.setAnimationLoop(now => {
     task.fill.style.width = (p*100).toFixed(1) + '%';
     if (p >= 1) landTask(now);
   } else if (nextAt < 0){
-    nextAt = now + 260;
+    nextAt = now + 120;
   } else if (now >= nextAt){
     startTask(now);
   }
