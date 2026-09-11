@@ -5,7 +5,7 @@ One page, built from the eight STL parts of the Soshie print set.
 A full day passes every sixty seconds. The clock behind her sweeps, the sky runs
 from open daylight down through dusk into night and back, and the same values
 light the figure — bright at noon, dim and blue at four in the morning with a
-screen-coloured lamp on her face. Work ships throughout. She follows the pointer
+screen-coloured lamp on her face. Work ships throughout: one job at a time fills its own card like a progress bar, each at its own pace, and lands as the next begins. She follows the pointer
 and shifts her weight the way someone standing does.
 
 Type is white at every hour. That is what lets the sky cross-fade continuously:

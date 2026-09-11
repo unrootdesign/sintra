@@ -67,20 +67,30 @@
     margin-top:5px}
 
   #out{position:absolute;z-index:4;right:26px;top:76px;bottom:0;width:300px;overflow:hidden;
-    mask-image:linear-gradient(180deg,transparent 0%,#000 11%,#000 100%);
-    -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 11%,#000 100%)}
+    mask-image:linear-gradient(180deg,transparent 0,#000 58px,
+      #000 calc(100% - 26px),transparent 100%);
+    -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 58px,
+      #000 calc(100% - 26px),transparent 100%)}
   .lbl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
     margin-bottom:10px}
-  #out-list{display:flex;flex-direction:column;gap:7px;justify-content:flex-end;min-height:100%;
-    will-change:transform}
-  .done{background:#FBFCFD;color:#15181D;border-radius:12px;padding:10px 12px;flex:0 0 auto;
-    box-shadow:0 6px 18px -10px rgba(3,10,22,.55);
+  #out-list{position:absolute;left:0;right:0;bottom:34px;
+    display:flex;flex-direction:column;gap:7px}
+  .done{position:relative;overflow:hidden;background:#FBFCFD;color:#15181D;border-radius:12px;
+    padding:10px 12px;flex:0 0 auto;box-shadow:0 6px 18px -10px rgba(3,10,22,.55);
     animation:pop .38s cubic-bezier(.2,.9,.3,1.15)}
+  /* the job fills its own card while it runs, then the green drains away */
+  .done .fill{position:absolute;left:0;top:0;bottom:0;width:0;
+    background:linear-gradient(90deg,rgba(45,198,140,.10),rgba(45,198,140,.22));
+    box-shadow:1px 0 0 rgba(45,198,140,.55);transition:opacity .55s .12s}
+  .done:not(.working) .fill{opacity:0}
+  .done .cap,.done .tag{position:relative}
   .done .cap{font-size:11.5px;line-height:1.38}
   .done .tag{margin-top:6px;font-size:8px;letter-spacing:.12em;text-transform:uppercase;
     color:rgba(21,24,29,.52);display:flex;align-items:center;gap:6px}
   .done .tag i{width:5px;height:5px;border-radius:50%;background:var(--tick);display:block;
-    flex:0 0 auto}
+    flex:0 0 auto;transition:background .3s}
+  .done.working .tag{color:rgba(21,24,29,.38)}
+  .done.working .tag i{background:rgba(21,24,29,.20)}
   @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.96)}}
 
   #say{position:absolute;z-index:4;left:26px;bottom:26px;max-width:min(50vw,520px)}
@@ -380,7 +390,9 @@ const WORK = [
 ];
 const outList = el('out-list');
 let bag = [], lastIdx = -1, total = 0, day = 1;
-function ship(){
+let task = null, nextAt = -1;
+
+function startTask(now){
   if (!bag.length){ bag = WORK.map((_,i)=>i);
     for (let i=bag.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [bag[i],bag[j]]=[bag[j],bag[i]]; } }
   // don't draw anything that is still on screen, not just the one before
@@ -392,29 +404,40 @@ function ship(){
   bag.push(...skipped);
   lastIdx = idx;
   const [cap, tag] = WORK[idx];
-  total++;
-  el('t-total').textContent = total;
+
   const d = document.createElement('div');
-  d.className = 'done';
+  d.className = 'done working';
   d.dataset.i = idx;
-  d.innerHTML = `<div class="cap">${cap}</div><div class="tag"><i></i>${tag}</div>`;
+  d.innerHTML = `<div class="fill"></div><div class="cap">${cap}</div>` +
+                `<div class="tag"><i></i>${tag}</div>`;
   outList.appendChild(d);
   while (outList.children.length > 9) outList.firstElementChild.remove();
-  // slide the whole stack up by exactly the new card's height, so the motion reads
+
+  // the newest card holds the bottom slot; the column grows upward past it
   const step = d.offsetHeight + 7;
-  outList.style.transition = 'none';
-  outList.style.transform  = `translateY(${step}px)`;
+  d.style.marginTop = -step + 'px';
   requestAnimationFrame(() => {
-    outList.style.transition = 'transform .42s cubic-bezier(.25,.9,.3,1)';
-    outList.style.transform  = 'translateY(0)';
+    d.style.transition = 'margin-top .44s cubic-bezier(.25,.9,.3,1)';
+    d.style.marginTop  = '0px';
   });
+
+  // each job takes its own time — enough spread to notice, not enough to look broken
+  task = {node:d, fill:d.querySelector('.fill'), start:now, dur:820 + Math.random()*950};
+}
+
+function landTask(now){
+  task.fill.style.width = '100%';
+  task.node.classList.remove('working');
+  total++;
+  el('t-total').textContent = total;
+  task = null;
+  nextAt = now + 170 + Math.random()*260;
 }
 
 /* ---- run ---- */
 const hh = el('hh'), mm = el('mm');
 const start = performance.now();
-let last = start, prevHour = 0, shipped = 0;
-const SHIP_MS = 950;
+let last = start, prevHour = 0;
 
 renderer.setAnimationLoop(now => {
   const dt = Math.min(0.05, (now - last)/1000); last = now;
@@ -439,9 +462,15 @@ renderer.setAnimationLoop(now => {
   scene.environmentIntensity = 0.05 + 0.55*s.d;
   lamp.intensity = 0.40 * (1 - Math.min(1, s.d/0.5));   // just enough to keep her readable
 
-  const due = Math.floor((now - start) / SHIP_MS);
-  for (let n = 0; n < Math.min(3, due - shipped); n++) ship();   // never more than a small catch-up
-  shipped = due;
+  if (task){
+    const p = Math.min(1, (now - task.start) / task.dur);
+    task.fill.style.width = (p*100).toFixed(1) + '%';
+    if (p >= 1) landTask(now);
+  } else if (nextAt < 0){
+    nextAt = now + 260;
+  } else if (now >= nextAt){
+    startTask(now);
+  }
 
   // head: the pointer when there is one, a slow look around when there is not
   const want = (now - lastMove < 2400) ? 1 : 0;
