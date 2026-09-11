@@ -3,10 +3,14 @@
 One page, built from the eight STL parts of the Soshie print set.
 
 A full day passes every sixty seconds. The clock behind her sweeps, the sky runs
-from her own pink-to-yellow gradient through dusk into night and back, and the
-same values light the figure — warm at noon, dim and blue at four in the morning
-with a screen-coloured lamp on her face. Work ships throughout. She follows the
-pointer and shifts her weight the way someone standing does.
+from open daylight down through dusk into night and back, and the same values
+light the figure — bright at noon, dim and blue at four in the morning with a
+screen-coloured lamp on her face. Work ships throughout. She follows the pointer
+and shifts her weight the way someone standing does.
+
+Type is white at every hour. That is what lets the sky cross-fade continuously:
+as soon as text has to flip from dark to light somewhere around dawn, the whole
+transition reads as a step no matter how the colours are eased.
 
 `mark.js` holds the chest mark as the supplied vector, filled straight onto a
 canvas with `Path2D` so it stays exact at any size.
