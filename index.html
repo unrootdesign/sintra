@@ -46,6 +46,9 @@
   #stage{position:absolute;inset:0;z-index:2}
   /* one full-width veil in the current sky colour; the stops approximate an ease
      so the gradient has no edge you can pick out */
+  /* 8-bit gradients band; a little noise over everything dithers it away */
+  #grain{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;
+    opacity:.075;mix-blend-mode:overlay}
   #veil{position:absolute;left:0;right:0;bottom:0;height:58%;z-index:3;pointer-events:none;
     background:linear-gradient(to top,
       rgba(var(--scrimRGB),.92) 0%,   rgba(var(--scrimRGB),.86) 10%,
@@ -104,6 +107,7 @@
 <div id="card">
   <div id="sky"></div>
   <div id="veil"></div>
+  <canvas id="grain"></canvas>
 
   <svg id="wall" viewBox="0 0 100 100" aria-hidden="true">
     <circle class="rim" cx="50" cy="50" r="47"/>
@@ -171,9 +175,9 @@ const SKY = [
   {h: 3,   a:'#1C0F28', m:'#0E0817', b:'#050308', d:0.00},
   {h: 5,   a:'#35254E', m:'#1B1430', b:'#0A0814', d:0.03},
   {h: 6.5, a:'#7A6490', m:'#3E3252', b:'#17121F', d:0.15},
-  {h: 8,   a:'#6FC6FA', m:'#1F84E2', b:'#0B3C77', d:0.70},
-  {h:12,   a:'#7ED4FF', m:'#268FEC', b:'#0D4489', d:1.00},
-  {h:16,   a:'#70C7FA', m:'#2086E3', b:'#0B3D78', d:0.86},
+  {h: 8,   a:'#9CE0FF', m:'#1F84E2', b:'#0B3C77', d:0.70},
+  {h:12,   a:'#AEEAFF', m:'#268FEC', b:'#0D4489', d:1.00},
+  {h:16,   a:'#9DE1FF', m:'#2086E3', b:'#0B3D78', d:0.86},
   {h:18.5, a:'#A0748E', m:'#56374F', b:'#201426', d:0.30},
   {h:20.5, a:'#40233C', m:'#22132A', b:'#0C0812', d:0.05},
   {h:24,   a:'#241634', m:'#130C1E', b:'#060409', d:0.00},
@@ -194,7 +198,7 @@ const root = document.documentElement, skyEl = el('sky');
 function paint(hour){
   const s = sky(hour);
   skyEl.style.background =
-    `linear-gradient(176deg, ${css(s.a)} 0%, ${css(s.m)} 38%, ${css(s.b)} 100%)`;
+    `linear-gradient(176deg, ${css(s.a)} 0%, ${css(s.m)} 42%, ${css(s.b)} 100%)`;
   root.style.setProperty('--scrimRGB', s.b.map(v=>Math.round(v)).join(','));
   root.style.setProperty('--c-rim', (0.09 + 0.13*s.d).toFixed(3));
   root.style.setProperty('--c-dot', (0.11 + 0.16*s.d).toFixed(3));
@@ -206,6 +210,24 @@ function paint(hour){
 }
 
 /* ---- scene ---- */
+{ // one noise tile, painted across a canvas that sits above the gradients
+  const grain = el('grain'), g = grain.getContext('2d');
+  const tile = document.createElement('canvas'); tile.width = tile.height = 128;
+  const tg = tile.getContext('2d'), img = tg.createImageData(128, 128);
+  for (let i = 0; i < img.data.length; i += 4){
+    const v = 90 + ((Math.random() * 76) | 0);
+    img.data[i] = img.data[i+1] = img.data[i+2] = v; img.data[i+3] = 255;
+  }
+  tg.putImageData(img, 0, 0);
+  const paintGrain = () => {
+    grain.width = grain.clientWidth; grain.height = grain.clientHeight;
+    g.fillStyle = g.createPattern(tile, 'repeat');
+    g.fillRect(0, 0, grain.width, grain.height);
+  };
+  paintGrain();
+  addEventListener('resize', paintGrain);
+}
+
 const stage = el('stage');
 const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -309,14 +331,20 @@ let bag = [], lastIdx = -1, total = 0, day = 1;
 function ship(){
   if (!bag.length){ bag = WORK.map((_,i)=>i);
     for (let i=bag.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [bag[i],bag[j]]=[bag[j],bag[i]]; } }
-  let idx = bag.pop();
-  if (idx === lastIdx && bag.length){ const alt = bag.pop(); bag.push(idx); idx = alt; }
+  // don't draw anything that is still on screen, not just the one before
+  const onScreen = new Set([...outList.children].map(c => c.dataset.i));
+  let idx = bag.pop(), skipped = [];
+  while ((idx === lastIdx || onScreen.has(String(idx))) && bag.length){
+    skipped.push(idx); idx = bag.pop();
+  }
+  bag.push(...skipped);
   lastIdx = idx;
   const [cap, tag] = WORK[idx];
   total++;
   el('t-total').textContent = total;
   const d = document.createElement('div');
   d.className = 'done';
+  d.dataset.i = idx;
   d.innerHTML = `<div class="cap">${cap}</div><div class="tag"><i></i>${tag}</div>`;
   outList.appendChild(d);
   while (outList.children.length > 9) outList.firstElementChild.remove();
