@@ -9,9 +9,9 @@
     --outer:#EFEDEE; --edge:rgba(0,0,0,.06);
     /* driven from JS as the day turns */
     --ink:#FFFFFF; --panel:rgba(6,12,26,.56); --hair:rgba(255,255,255,.19);
-    --faint:rgba(255,255,255,.58); --scrim:rgba(26,50,80,.82);
+    --faint:rgba(255,255,255,.58); --scrimRGB:20,82,143;
     --tick:#4FE0A8;
-    --c-rim:.16; --c-pip:.20; --c-q:.34; --c-hh:.46; --c-mm:.32;
+    --c-rim:.10; --c-dot:.13; --c-pip:.12; --c-q:.18; --c-hh:.26; --c-mm:.18;
     --disp:"Martian Mono",ui-monospace,monospace;
     --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
     --focal:50%;
@@ -33,16 +33,26 @@
   /* the clock lives behind her, like something on the wall */
   #wall{position:absolute;z-index:1;left:var(--focal);top:48%;transform:translate(-50%,-50%);
     width:min(86vh,680px);aspect-ratio:1;pointer-events:none;
-    filter:drop-shadow(0 0 3px rgba(255,255,255,.55))
-           drop-shadow(0 0 22px rgba(255,255,255,.40))}
+    filter:drop-shadow(0 0 4px rgba(255,255,255,.30))
+           drop-shadow(0 0 26px rgba(255,255,255,.24))}
   #wall .rim{fill:none;stroke:#fff;stroke-opacity:var(--c-rim);stroke-width:.13}
   #wall .pip{stroke:#fff;stroke-opacity:var(--c-pip);stroke-width:.14;stroke-linecap:round}
   #wall .pip.q{stroke-opacity:var(--c-q);stroke-width:.30}
+  #wall .dot{stroke-opacity:var(--c-dot);stroke-dasharray:.14 1.5;stroke-linecap:round}
   #wall .hh{stroke:#fff;stroke-opacity:var(--c-hh);stroke-width:.42;stroke-linecap:round}
   #wall .mm{stroke:#fff;stroke-opacity:var(--c-mm);stroke-width:.26;stroke-linecap:round}
   #wall .pin{fill:#fff;fill-opacity:var(--c-hh)}
 
   #stage{position:absolute;inset:0;z-index:2}
+  /* one full-width veil in the current sky colour; the stops approximate an ease
+     so the gradient has no edge you can pick out */
+  #veil{position:absolute;left:0;right:0;bottom:0;height:58%;z-index:3;pointer-events:none;
+    background:linear-gradient(to top,
+      rgba(var(--scrimRGB),.92) 0%,   rgba(var(--scrimRGB),.86) 10%,
+      rgba(var(--scrimRGB),.72) 22%,  rgba(var(--scrimRGB),.54) 36%,
+      rgba(var(--scrimRGB),.36) 50%,  rgba(var(--scrimRGB),.20) 64%,
+      rgba(var(--scrimRGB),.09) 78%,  rgba(var(--scrimRGB),.03) 90%,
+      rgba(var(--scrimRGB),0)   100%)}
   canvas{display:block}
 
   #now{position:absolute;z-index:4;top:24px;left:26px}
@@ -53,28 +63,25 @@
   .sub{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
     margin-top:5px}
 
-  #out{position:absolute;z-index:4;right:26px;top:76px;bottom:0;width:300px;
-    display:flex;flex-direction:column}
+  #out{position:absolute;z-index:4;right:26px;top:76px;bottom:0;width:300px;overflow:hidden;
+    mask-image:linear-gradient(180deg,transparent 0%,#000 11%,#000 100%);
+    -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 11%,#000 100%)}
   .lbl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
     margin-bottom:10px}
-  #out-list{display:flex;flex-direction:column;gap:7px;overflow:hidden;
-    mask-image:linear-gradient(180deg,#000 0 93%,transparent 100%);
-    -webkit-mask-image:linear-gradient(180deg,#000 0 93%,transparent 100%)}
-  .done{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:10px 12px;
-    backdrop-filter:blur(12px);flex:0 0 auto;
-    animation:pop .34s cubic-bezier(.2,.9,.3,1.2)}
+  #out-list{display:flex;flex-direction:column;gap:7px;justify-content:flex-end;min-height:100%;
+    will-change:transform}
+  .done{background:#FBFCFD;color:#15181D;border-radius:12px;padding:10px 12px;flex:0 0 auto;
+    box-shadow:0 6px 18px -10px rgba(3,10,22,.55);
+    animation:pop .38s cubic-bezier(.2,.9,.3,1.15)}
   .done .cap{font-size:11.5px;line-height:1.38}
   .done .tag{margin-top:6px;font-size:8px;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--faint);display:flex;align-items:center;gap:6px}
+    color:rgba(21,24,29,.52);display:flex;align-items:center;gap:6px}
   .done .tag i{width:5px;height:5px;border-radius:50%;background:var(--tick);display:block;
     flex:0 0 auto}
-  @keyframes pop{from{opacity:0;transform:translateY(-14px) scale(.95)}}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.96)}}
 
   #say{position:absolute;z-index:4;left:26px;bottom:26px;max-width:min(50vw,520px)}
-  /* a corner vignette in the current sky colour, so the line reads over her at any hour */
-  #say::before{content:"";position:absolute;inset:-40px -90px -40px -46px;z-index:-1;
-    pointer-events:none;
-    background:radial-gradient(125% 150% at 4% 94%,var(--scrim) 0%,transparent 72%)}
+
   #say h1{margin:0;font-family:var(--disp);font-weight:300;letter-spacing:-.045em;line-height:1.12;max-width:12ch;
     font-size:clamp(21px,3vw,38px);text-wrap:balance}
   #say p{margin:12px 0 0;font-size:11px;color:var(--faint);letter-spacing:.02em;line-height:1.72}
@@ -96,10 +103,11 @@
 
 <div id="card">
   <div id="sky"></div>
+  <div id="veil"></div>
 
   <svg id="wall" viewBox="0 0 100 100" aria-hidden="true">
     <circle class="rim" cx="50" cy="50" r="47"/>
-    <circle class="rim" cx="50" cy="50" r="42.5"/>
+    <circle class="rim dot" cx="50" cy="50" r="44.2"/>
     <g id="pips"></g>
     <line class="hh" id="hh" x1="50" y1="50" x2="50" y2="28"/>
     <line class="mm" id="mm" x1="50" y1="50" x2="50" y2="15"/>
@@ -149,7 +157,7 @@ const DAY_MS = 60000;                       // a whole day per real minute
 { const g = el('pips');
   for (let i = 0; i < 12; i++){
     const a = i/12*Math.PI*2, q = i % 3 === 0;
-    const r1 = q ? 34 : 37.5, r2 = 40.5;
+    const r1 = q ? 37.4 : 39.6, r2 = 41.8;
     const l = document.createElementNS('http://www.w3.org/2000/svg','line');
     l.setAttribute('x1', 50+Math.sin(a)*r1); l.setAttribute('y1', 50-Math.cos(a)*r1);
     l.setAttribute('x2', 50+Math.sin(a)*r2); l.setAttribute('y2', 50-Math.cos(a)*r2);
@@ -159,16 +167,16 @@ const DAY_MS = 60000;                       // a whole day per real minute
 
 /* ---- sky ---- */
 const SKY = [
-  {h: 0,   a:'#20122A', b:'#070509', d:0.00},
-  {h: 3,   a:'#1A0E22', b:'#05040A', d:0.00},
-  {h: 5,   a:'#31234A', b:'#0C0A18', d:0.03},
-  {h: 6.5, a:'#6E5C86', b:'#1B1526', d:0.15},
-  {h: 8,   a:'#77C3F2', b:'#1E4677', d:0.70},
-  {h:12,   a:'#8AD2FB', b:'#245380', d:1.00},
-  {h:16,   a:'#78C4F2', b:'#1F4878', d:0.86},
-  {h:18.5, a:'#96708E', b:'#2C1D33', d:0.30},
-  {h:20.5, a:'#3C2038', b:'#0E0913', d:0.05},
-  {h:24,   a:'#20122A', b:'#070509', d:0.00},
+  {h: 0,   a:'#241634', m:'#130C1E', b:'#060409', d:0.00},
+  {h: 3,   a:'#1C0F28', m:'#0E0817', b:'#050308', d:0.00},
+  {h: 5,   a:'#35254E', m:'#1B1430', b:'#0A0814', d:0.03},
+  {h: 6.5, a:'#7A6490', m:'#3E3252', b:'#17121F', d:0.15},
+  {h: 8,   a:'#6FC6FA', m:'#1F84E2', b:'#0B3C77', d:0.70},
+  {h:12,   a:'#7ED4FF', m:'#268FEC', b:'#0D4489', d:1.00},
+  {h:16,   a:'#70C7FA', m:'#2086E3', b:'#0B3D78', d:0.86},
+  {h:18.5, a:'#A0748E', m:'#56374F', b:'#201426', d:0.30},
+  {h:20.5, a:'#40233C', m:'#22132A', b:'#0C0812', d:0.05},
+  {h:24,   a:'#241634', m:'#130C1E', b:'#060409', d:0.00},
 ];
 const hex  = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
 const mix  = (p,q,t) => p.map((v,i) => v + (q[i]-v)*t);
@@ -179,18 +187,21 @@ function sky(hour){
   const A = SKY[i], B = SKY[i+1];
   let t = (hour-A.h)/(B.h-A.h);
   t = t*t*(3-2*t);                       // ease each leg so no stop reads as a step
-  return {a: mix(hex(A.a),hex(B.a),t), b: mix(hex(A.b),hex(B.b),t), d: A.d+(B.d-A.d)*t};
+  return {a: mix(hex(A.a),hex(B.a),t), m: mix(hex(A.m),hex(B.m),t),
+          b: mix(hex(A.b),hex(B.b),t), d: A.d+(B.d-A.d)*t};
 }
 const root = document.documentElement, skyEl = el('sky');
 function paint(hour){
   const s = sky(hour);
-  skyEl.style.background = `linear-gradient(172deg, ${css(s.a)} 0%, ${css(s.b)} 100%)`;
-  root.style.setProperty('--scrim', rgba(s.b, .88));
-  root.style.setProperty('--c-rim', (0.15 + 0.26*s.d).toFixed(3));
-  root.style.setProperty('--c-pip', (0.18 + 0.30*s.d).toFixed(3));
-  root.style.setProperty('--c-q',   (0.30 + 0.34*s.d).toFixed(3));
-  root.style.setProperty('--c-hh',  (0.42 + 0.36*s.d).toFixed(3));
-  root.style.setProperty('--c-mm',  (0.28 + 0.34*s.d).toFixed(3));
+  skyEl.style.background =
+    `linear-gradient(176deg, ${css(s.a)} 0%, ${css(s.m)} 38%, ${css(s.b)} 100%)`;
+  root.style.setProperty('--scrimRGB', s.b.map(v=>Math.round(v)).join(','));
+  root.style.setProperty('--c-rim', (0.09 + 0.13*s.d).toFixed(3));
+  root.style.setProperty('--c-dot', (0.11 + 0.16*s.d).toFixed(3));
+  root.style.setProperty('--c-pip', (0.10 + 0.14*s.d).toFixed(3));
+  root.style.setProperty('--c-q',   (0.16 + 0.20*s.d).toFixed(3));
+  root.style.setProperty('--c-hh',  (0.24 + 0.24*s.d).toFixed(3));
+  root.style.setProperty('--c-mm',  (0.16 + 0.20*s.d).toFixed(3));
   return s;
 }
 
@@ -294,18 +305,29 @@ const WORK = [
  ['Entry in one tap. Winner picked Sunday, in public.','Giveaway live'],
 ];
 const outList = el('out-list');
-let bag = [], total = 0, day = 1;
+let bag = [], lastIdx = -1, total = 0, day = 1;
 function ship(){
   if (!bag.length){ bag = WORK.map((_,i)=>i);
     for (let i=bag.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [bag[i],bag[j]]=[bag[j],bag[i]]; } }
-  const [cap, tag] = WORK[bag.pop()];
+  let idx = bag.pop();
+  if (idx === lastIdx && bag.length){ const alt = bag.pop(); bag.push(idx); idx = alt; }
+  lastIdx = idx;
+  const [cap, tag] = WORK[idx];
   total++;
   el('t-total').textContent = total;
   const d = document.createElement('div');
   d.className = 'done';
   d.innerHTML = `<div class="cap">${cap}</div><div class="tag"><i></i>${tag}</div>`;
-  outList.prepend(d);
-  while (outList.children.length > 9) outList.lastElementChild.remove();
+  outList.appendChild(d);
+  while (outList.children.length > 9) outList.firstElementChild.remove();
+  // slide the whole stack up by exactly the new card's height, so the motion reads
+  const step = d.offsetHeight + 7;
+  outList.style.transition = 'none';
+  outList.style.transform  = `translateY(${step}px)`;
+  requestAnimationFrame(() => {
+    outList.style.transition = 'transform .42s cubic-bezier(.25,.9,.3,1)';
+    outList.style.transform  = 'translateY(0)';
+  });
 }
 
 /* ---- run ---- */
